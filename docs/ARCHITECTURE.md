@@ -34,8 +34,8 @@ All paths below are relative to `src/`.
         │ uses                       │ uses
 ┌───────▼────────────────────────────▼─────────────────────────────────┐
 │ model/  MarkdownDocument, Preferences   (state + events, no DOM)     │
-│ editor/ textTransforms, formatCommands  (pure functions, no DOM)     │
-│ markdown/ MarkdownParser + rules        (pure, no DOM)               │
+│ editor/ text+tableTransforms, commands  (pure functions, no DOM)     │
+│ markdown/ MarkdownParser + rules, tableSyntax (pure, no DOM)         │
 │ core/   Observable, CommandRegistry, KeyboardShortcuts               │
 └──────────────────────────────────────────────────────────────────────┘
 ```
@@ -49,7 +49,7 @@ why `npm test` can run them in plain Node.
 | `core/`     | Generic mechanisms: events, commands, shortcuts   | only `KeyboardShortcuts.attach` |
 | `model/`    | What the app *knows*: document text, dirty flag, preferences | no |
 | `markdown/` | Markdown → HTML                                   | no           |
-| `editor/`   | How to *change* Markdown text (bold, lists…)      | `smartKeys` only (listens to keys) |
+| `editor/`   | How to *change* Markdown text (bold, lists, tables…) | `smartKeys` only (listens to keys) |
 | `platform/` | Files, window, drops, menu: browser vs desktop    | yes (implementations) |
 | `ui/`       | Showing things and capturing input                | yes          |
 | `app/`      | Use cases that coordinate the above               | no           |
@@ -121,10 +121,17 @@ CLOSING     red light / ⌘W / ⌘Q ─▶ WindowService.guardClose ─▶ Docum
 | **`document.execCommand('insertText')`** | It's the only cross-browser way to change textarea text that keeps native **undo** working. It's deprecated but still supported everywhere, and there's a fallback in `EditorView.applyEdit`. | Setting `.value`: this erases the undo history. |
 | **Native `<select>` and `<dialog>`, restyled** | Keyboard handling, focus trapping, screen readers and native menus come for free. | Custom dropdowns: a lot of code to make them accessible. |
 | **Tauri for the desktop app** | ~4 MB instead of ~150 MB, uses macOS's own WebKit, and its plugins are called from JS. Full record in DESKTOP.md. | Electron (size), Neutralinojs (maturity). |
+| **Tables edited through a model** (`tableTransforms.js`: find → model → change → serialize → place caret) | Every operation (Tab, add column, align…) is a few lines on a plain array, and caret placement lives in ONE tested function. | Editing the text directly per operation: lots of fragile string slicing. |
+| **Table syntax shared** (`markdown/tableSyntax.js`) | The parser and the table tools must agree on what a cell is. | Two copies of the splitting logic that could drift apart. |
+| **Text width in CSS variables** (`--text-width`, `--sheet-pad`, `--zoom`) | The ruler's markers, the page width and the text column are all derived from the same variables, so they can't misalign, and JS never measures layout. | Measuring elements in JS and positioning markers by hand. |
+| **Notebook rules on the paper, shifted by `--scroll-y`** | Works the same in Chrome and Safari's WebKit. `background-attachment: local` on a textarea doesn't in WebKit. | `background-attachment: local`. |
+| **Zoom = scaled sizes, not CSS `zoom`/`transform`** | Text stays crisp, the caret and selection stay exact, and the line height stays whole-pixel so the rules align. | `transform: scale()`: blurry text, wrong hit-testing. |
 | **Proportional scroll sync** | Simple and independent of the parser. | Line mapping: precise, but couples the preview to the parser. |
 | **Preview via `innerHTML`** | Safe only because the parser escapes everything. That guarantee lives in one tested place (`tests/markdownParser.test.js`, "security"). | Sanitizing in the view: duplicates the responsibility. |
 
 ## 7. How to extend
+
+(GUIDE.md §9 walks through a complete, tested example step by step.)
 
 **Add Markdown syntax, for example `==highlight==`.** Add one rule to
 `js/markdown/inlineRules.js` before `bold`:

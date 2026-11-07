@@ -105,7 +105,12 @@ Two small contract changes made both platforms fit:
   about unsaved changes first. macOS's built-in Quit would exit immediately.
 - **Traffic lights** are the real macOS ones (`titleBarStyle: "Overlay"`,
   positioned by `trafficLightPosition` in `tauri.conf.json`). The CSS ones are
-  hidden on the desktop.
+  hidden on the desktop. The window is forced to `"theme": "Light"`, so the
+  lights grey out properly when it's inactive even if your Mac is in dark mode.
+  They're the standard size macOS uses for windows without a native toolbar.
+- **Check marks in the menu** ("Show Ruler", "Format Tables Automatically")
+  are real `CheckMenuItem`s that follow the preferences (`refreshChecks`).
+- **Minimum macOS 14**, because the table menu uses the HTML popover API (Safari 17).
 - **Dragging the window** works from any empty part of the title bar or toolbar
   (`data-tauri-drag-region="deep"` on `.chrome` in `index.html`).
 
@@ -139,7 +144,12 @@ only JS file to adapt is `tauriApi.js`.
   - [ ] Red traffic light / ⌘W / ⌘Q with unsaved changes shows the sheet; Cancel keeps the window
   - [ ] Menu items and shortcuts work, each only once (⌘B toggles bold once)
   - [ ] ⌘C / ⌘V / ⌘Z work in the editor
-  - [ ] Traffic lights are vertically centred in the title bar
+  - [ ] Traffic lights are vertically centred in the title bar, and grey (not white) when the window is inactive
+  - [ ] Typing `--` in a table's delimiter row stays `--` (no em dash)
+  - [ ] Notebook rules stay under the text when scrolling and at several zoom levels
+  - [ ] Table menu: the size grid inserts a table; Tab/⇧Tab/Enter move between cells
+  - [ ] Dragging a ruler marker changes the text width on both pages
+  - [ ] ⌘+ / ⌘− / ⌘0 and pinch zoom; Format ▸ Table submenu; check marks follow the toolbar
   - [ ] Built app: Finder → Open With → Markdown Editor works when the app is closed and when it's already open
 
 ## 7. Possible next steps

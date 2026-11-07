@@ -5,6 +5,9 @@ A local Markdown **reader and writer**, built with plain **HTML, CSS and JavaScr
 **TextEdit**, redone in the skeuomorphic *Aqua* style: brushed aluminium, glossy
 buttons, real-looking paper.
 
+**New here? Start with [docs/GUIDE.md](docs/GUIDE.md)**, the practical guide
+to running, testing, building and changing the app.
+
 The same code runs two ways:
 - **In a browser**, for quick testing (`npm start`).
 - **As a native macOS app** (about 4 MB) via [Tauri](https://tauri.app)
@@ -60,8 +63,17 @@ a manual test checklist are in [docs/DESKTOP.md](docs/DESKTOP.md).
   You're asked before unsaved changes are thrown away.
 - **Desktop extras:** a native menu bar, the real traffic lights, and Finder
   "Open With…" / double-click for `.md` files.
-- **Status bar:** word and character count, line and column, save messages.
-- **Preferences** that persist: view mode, editor font and size, ruler on/off.
+- **Tables without the tedium:** insert from a size grid, Tab / ⇧Tab / Enter
+  to move between cells, add or delete rows and columns, align columns, and
+  automatic pipe alignment (can be turned off).
+- **Text-width ruler:** drag the margin markers on top of the page to set how
+  wide the text column is (line length), for both the editor and the preview.
+- **Zoom:** ⌘+ / ⌘− / ⌘0 or pinch. It magnifies the pages, not the toolbar.
+- **No silent rewriting:** macOS "smart dashes/quotes" and autocorrect are
+  off in the editor, so `--` stays `--`.
+- **Status bar:** word and character count, line and column, zoom, save messages.
+- **Preferences** that persist: view mode, editor font and size, text width,
+  zoom, ruler, table auto-format.
 - **Safe preview:** raw HTML in a file is shown as text, never run, and
   `javascript:` links are disabled.
 
@@ -75,6 +87,8 @@ a manual test checklist are in [docs/DESKTOP.md](docs/DESKTOP.md).
 | Close / Quit *(desktop)* | ⌘W / ⌘Q | | |
 | Cycle view mode     | ⌘\         | Link             | ⌘K       |
 | Body / Heading 1–4  | ⌥⌘0 … ⌥⌘4  | Bullets / Numbers / Checklist | ⇧⌘8 / ⇧⌘7 / ⇧⌘9 |
+| Zoom in / out / 100 % | ⌘+ / ⌘− / ⌘0 | Format table | ⌥⌘T |
+| In a table: next / previous cell | Tab / ⇧Tab | In a table: cell below | Enter |
 
 On Windows and Linux, use Ctrl in place of ⌘. Every shortcut is defined in one
 file, [`src/js/app/keymap.js`](src/js/app/keymap.js). The toolbar tooltips and the
@@ -106,7 +120,7 @@ src/                  THE APP (exactly what the browser loads and Tauri packages
     core/             Generic building blocks (observer, commands, shortcuts)
     model/            App state: the document, preferences, statistics
     markdown/         Markdown → HTML engine (parser + pluggable rules)
-    editor/           Pure text transforms, format command table, smart keys
+    editor/           Pure text & table transforms, command tables, smart keys
     platform/         File/window abstractions
       browser/        …implemented with web APIs
       desktop/        …implemented with Tauri
@@ -121,6 +135,8 @@ docs/                 Architecture, design and desktop write-ups
 
 ## Documentation
 
+- [docs/GUIDE.md](docs/GUIDE.md): **how to work on it.** Commands, git,
+  "where do I change X?", debugging, and worked examples.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): layers, data flow, how each
   SOLID principle shows up in the code, the main technical decisions, and how to extend the app.
 - [docs/DESIGN.md](docs/DESIGN.md): the visual design and the reasons behind it.

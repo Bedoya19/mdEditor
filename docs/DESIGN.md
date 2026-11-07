@@ -17,7 +17,7 @@ the physical thing it stands for:
 | Buttons              | Glossy plastic pills           | Two-tone gradient with a hard midline, light lip underneath, inset shadow when pressed |
 | Selected segment / default button | Aqua blue "jelly" | Blue two-tone gradient; the default dialog button gently pulses, as Aqua's did |
 | Popups               | Aqua pop-up buttons            | Real `<select>` with a blue cap holding ⌃⌄ arrows |
-| Ruler                | Printed ruler                  | Three repeating tick gradients (inch / half / eighth) + numbers from JS |
+| Ruler                | A page ruler, as in Pages      | One per page: tick gradients that start at the left text edge, grey margins, and blue triangle markers that set the text width |
 | Desk behind pages    | Grey felt                      | Grain + gradient + inner shadow under the toolbar |
 | Source sheet         | Notebook paper                 | Ruled lines and a red margin that scroll with the text (`background-attachment: local`), spaced to match the line height |
 | Preview sheet        | Printed page                   | Slightly warmer paper, book-style serif headings, recessed code cards, photo-mounted images |
@@ -34,7 +34,10 @@ the physical thing it stands for:
   *white*. Heavy grain makes it look dirty grey.
 - **Lucida Grande for the UI.** It was the Aqua system font and still ships
   with macOS. Other systems fall back to their native UI font.
-- **Light theme only, on purpose.** The style imitates physical materials
+- **Light theme only, on purpose.** The desktop window is forced to the light
+  appearance (`"theme": "Light"` in `tauri.conf.json`). Otherwise, on a Mac in
+  dark mode, macOS draws the native traffic lights and panels for dark
+  mode, and they wash out over our light chrome. The style imitates physical materials
   (paper, aluminium) that don't have a "dark" version. The tokens leave room
   to add one later.
 - **One stylesheet per component**, imported in cascade order by
@@ -49,7 +52,8 @@ the physical thing it stands for:
 | B / I / U                   | B / I / S / `</>` | Markdown has no underline, but it does have strikethrough and code |
 | Alignment buttons           | Left out | Markdown can't express alignment (except in table columns) |
 | List popup                  | Three list buttons | Bulleted, numbered and checklist are Markdown's list types |
-| Ruler                       | Kept, decorative, can be hidden | It's a big part of the TextEdit look |
+| Ruler with margin markers   | Kept, and **functional**: the markers set the text column width (line length) | TextEdit's margins and indents don't exist in Markdown, but line length matters for comfortable reading. It can be hidden |
+| View › Zoom                 | ⌘+ / ⌘− / ⌘0 and pinch magnify the pages only | Same behaviour as TextEdit: the document grows, the toolbar doesn't |
 | "— Edited", dot in the close button | Kept | The standard macOS sign of unsaved changes |
 
 ## Accessibility
