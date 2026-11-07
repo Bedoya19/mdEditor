@@ -8,7 +8,7 @@
  */
 
 import { FORMAT_COMMANDS, TABLE_COMMANDS } from '../editor/formatCommands.js';
-import { VIEW_MODES } from '../ui/Workspace.js';
+import { VIEW_MODES, stepZoom, clampZoom } from '../ui/Workspace.js';
 
 /**
  * @param {import('../core/CommandRegistry.js').CommandRegistry} commands
@@ -63,7 +63,11 @@ export function registerCommands(commands, { documentController, editor, prefere
     }, 'Cycle View Mode')
     .register('view.setFont', (key) => preferences.set('editorFont', key), 'Editor Font')
     .register('view.setFontSize', (px) => preferences.set('fontSize', Number(px)), 'Font Size')
-    .register('view.toggleRuler', () => preferences.set('showRuler', !preferences.get('showRuler')), 'Show Ruler');
+    .register('view.toggleRuler', () => preferences.set('showRuler', !preferences.get('showRuler')), 'Show Ruler')
+    .register('view.zoomIn', () => preferences.set('zoom', stepZoom(preferences.get('zoom'), +1)), 'Zoom In')
+    .register('view.zoomOut', () => preferences.set('zoom', stepZoom(preferences.get('zoom'), -1)), 'Zoom Out')
+    .register('view.zoomReset', () => preferences.set('zoom', 1), 'Actual Size')
+    .register('view.setZoom', (zoom) => preferences.set('zoom', clampZoom(Number(zoom))), 'Set Zoom');
 
   /* ── Window (traffic lights) ── */
   commands

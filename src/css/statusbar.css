@@ -42,3 +42,14 @@
     display: none;
   }
 }
+
+/* Zoom level (only visible when not 100 %); clicking resets. */
+.statusbar__zoom {
+  padding: 0 7px;
+  font-size: 10.5px;
+  line-height: 15px;
+  color: #3a3a3a;
+  background: var(--control-face);
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+}

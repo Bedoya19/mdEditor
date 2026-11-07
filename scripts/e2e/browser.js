@@ -100,6 +100,25 @@ export async function runBrowserChecks() {
   check('Align Right acts on the caret\'s column', (await value()).split('\n').slice(1, 3),
     ['| ------ | --: |', '| Banana |   3 |']);
 
+  // Zoom: ⌘= on a US keyboard and the "+" key on a Spanish one both zoom in.
+  const zoom = () => js('mdEditor.preferences.get("zoom")');
+  await press('=', 'Equal', 4);
+  check('⌘= (US layout) zooms in one step', await zoom(), 1.1);
+  await press('+', 'BracketRight', 4);
+  check('⌘+ (Spanish layout "+" key) zooms in too', await zoom(), 1.25);
+  check('status bar shows the zoom level', await js('document.querySelector("[data-role=zoom]").textContent'), '125 %');
+  check('editor text scales with whole-pixel line height (rules stay aligned)',
+    await js('[getComputedStyle(document.querySelector("#editor")).fontSize, getComputedStyle(document.querySelector("#editor")).lineHeight]'),
+    ['17.5px', '30px']);
+  await press('-', 'Minus', 4);
+  check('⌘− zooms out', await zoom(), 1.1);
+  await press('0', 'Digit0', 4);
+  check('⌘0 returns to 100 % and hides the indicator',
+    [await zoom(), await js('document.querySelector("[data-role=zoom]").hidden')], [1, true]);
+  await js(`document.querySelector('#workspace').dispatchEvent(new WheelEvent('wheel', { deltaY: -50, ctrlKey: true, bubbles: true, cancelable: true }))`);
+  check('pinch (ctrl + wheel) zooms smoothly', await zoom(), 1.65);
+  await press('0', 'Digit0', 4);
+
   // macOS "smart dashes" arrive as an OS replacement, not as typing.
   const replacementBlocked = (data, inputType) => js(`(() => {
     const e = new InputEvent('beforeinput', { inputType: '${inputType}', data: '${data}', cancelable: true, bubbles: true });

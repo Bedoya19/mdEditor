@@ -62,7 +62,8 @@ export class KeyboardShortcuts {
   /** Human label for tooltips:"mod+shift+s" → "⇧⌘S" on Mac, "Ctrl+Shift+S" elsewhere. */
   static label(combo) {
     const parts = normalise(combo).split('+');
-    const key = parts.pop().toUpperCase();
+    const key = KEY_LABELS[parts.at(-1)] ?? parts.at(-1).toUpperCase();
+    parts.pop();
     if (IS_MAC) {
       const symbols = { ctrl: '⌃', alt: '⌥', shift: '⇧', mod: '⌘' };
       return ['ctrl', 'alt', 'shift', 'mod'].filter((m) => parts.includes(m)).map((m) => symbols[m]).join('') + key;
@@ -71,6 +72,16 @@ export class KeyboardShortcuts {
     return [...parts.map((m) => names[m]), key].join('+');
   }
 }
+
+/**
+ * Keys that can't be written literally in a combo (it's split on "+"), or
+ * that live in different places on different keyboard layouts:
+ *   "plus":  "=" on a US keyboard (the unshifted "+"), its own "+" key on a
+ *            Spanish one. Both mean Zoom In, so both map to "plus".
+ *   "minus": "-".
+ */
+const NAMED_KEYS = { '+': 'plus', '=': 'plus', '-': 'minus' };
+const KEY_LABELS = { plus: '+', minus: '−' };
 
 /** Canonical order so "shift+mod+s" and "mod+shift+s" are the same key. */
 function normalise(combo) {
@@ -91,6 +102,9 @@ function comboFromEvent(event) {
   // ⌥/⇧ turning "1" into "¡" or "!". Fall back to event.key for other keys.
   const code = /^(?:Key([A-Z])|Digit(\d))$/.exec(event.code ?? '');
   const key = code ? (code[1] ?? code[2]).toLowerCase() : event.key.toLowerCase();
+  const named = NAMED_KEYS[key];
+  // "+" needs Shift on some layouts; ⌘+ and ⌘⇧+ should both zoom in.
+  if (named) return [...parts.filter((m) => m !== 'shift'), named].join('+');
   parts.push(key);
   return parts.join('+');
 }

@@ -48,6 +48,7 @@ import { SheetDialog } from './js/ui/SheetDialog.js';
 import { ScrollSync } from './js/ui/ScrollSync.js';
 import { PopoverMenu } from './js/ui/PopoverMenu.js';
 import { TableSizePicker } from './js/ui/TableSizePicker.js';
+import { PinchZoom } from './js/ui/PinchZoom.js';
 // Application
 import { DocumentController } from './js/app/DocumentController.js';
 import { registerCommands } from './js/app/registerCommands.js';
@@ -137,6 +138,10 @@ platform.watchDrops(windowEl, {
   onDrop: (payload) => documentController.openIncoming(payload),
 });
 new ScrollSync(editor.scrollElement, preview.scrollElement);
+new PinchZoom($('#workspace'), {
+  getZoom: () => preferences.get('zoom'),
+  setZoom: (zoom) => commands.execute('view.setZoom', zoom),
+});
 
 // The notebook rules are drawn on the paper behind the textarea (see
 // workspace.css); keep them moving with the text.
@@ -182,6 +187,7 @@ const applyPreference = {
   showRuler: (show) => { rulers.forEach((r) => r.setVisible(show)); toolbar.setValue('view.toggleRuler', show); },
   textWidth: (px) => { workspace.setTextWidth(px); rulers.forEach((r) => r.refresh()); },
   autoFormatTables: (on) => toolbar.setValue('table.toggleAutoFormat', on),
+  zoom: (zoom) => { workspace.setZoom(zoom); rulers.forEach((r) => r.setZoom(zoom)); statusBar.setZoom(zoom); },
 };
 preferences.on('change', ({ key, value }) => {
   applyPreference[key]?.(value);

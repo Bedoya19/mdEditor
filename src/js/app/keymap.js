@@ -30,5 +30,11 @@ export const KEYMAP = {
 
   'alt+mod+t': 'table.format',
 
+  // TextEdit's zoom keys. "plus" matches both "=" (US) and "+" (Spanish…),
+  // see NAMED_KEYS in core/KeyboardShortcuts.js.
+  'mod+plus': 'view.zoomIn',
+  'mod+minus': 'view.zoomOut',
+  'mod+0': 'view.zoomReset',
+
   'mod+\\': 'view.cycle',
 };

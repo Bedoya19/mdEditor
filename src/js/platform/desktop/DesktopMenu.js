@@ -103,6 +103,8 @@ export const MENU_LAYOUT = [
       { id: 'view.preview', command: 'view.setMode', arg: 'preview', label: 'Preview Only' },
       'view.cycle',
       SEP,
+      'view.zoomIn', 'view.zoomOut', 'view.zoomReset',
+      SEP,
       { command: 'view.toggleRuler', check: 'showRuler' },
       SEP,
       { predefined: 'Fullscreen' },
@@ -121,14 +123,17 @@ export const MENU_LAYOUT = [
 
 /**
  * keymap combo → Tauri accelerator:  "mod+shift+s" → "CmdOrCtrl+Shift+S",
- * "alt+mod+1" → "Alt+CmdOrCtrl+1", "mod+\" → "CmdOrCtrl+Backslash".
+ * "alt+mod+1" → "Alt+CmdOrCtrl+1", "mod+\" → "CmdOrCtrl+Backslash", "mod+plus" → "CmdOrCtrl++".
  * @param {string} combo
  */
 export function toAccelerator(combo) {
   const parts = combo.toLowerCase().split('+');
   const key = parts.pop();
   const modifiers = { mod: 'CmdOrCtrl', shift: 'Shift', alt: 'Alt', ctrl: 'Ctrl' };
-  const keyName = key === '\\' ? 'Backslash' : key.toUpperCase();
+  // "plus" becomes the literal "+" character: macOS then matches whichever
+  // key types "+" on the user's layout (its own key on a Spanish keyboard).
+  const special = { '\\': 'Backslash', plus: '+', minus: '-' };
+  const keyName = special[key] ?? key.toUpperCase();
   return [...parts.map((m) => modifiers[m]), keyName].join('+');
 }
 

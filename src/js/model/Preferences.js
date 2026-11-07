@@ -17,11 +17,12 @@ const STORAGE_KEY = 'mdEditor.preferences';
 /** Single source of truth for which settings exist and their defaults. */
 export const DEFAULT_PREFERENCES = Object.freeze({
   viewMode: 'split',          // 'edit' | 'split' | 'preview'
-  editorFont: 'mono',         // key into FONT_STACKS (see ui/EditorView.js)
+  editorFont: 'mono',         // key into EDITOR_FONTS (see ui/fonts.js)
   fontSize: 14,               // px
   showRuler: true,
   autoFormatTables: true,     // re-align table pipes on Tab/Enter and table commands
   textWidth: 720,             // px of text column at 100 % zoom (7.5″), set by the ruler
+  zoom: 1,                    // page magnification (1 = 100 %): ⌘+ / ⌘− / ⌘0, or pinch
 });
 
 export class Preferences extends Observable {
