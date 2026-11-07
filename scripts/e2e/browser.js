@@ -60,7 +60,7 @@ export async function runBrowserChecks() {
   await js('mdEditor.commands.execute("view.setMode", "split")');
 
   await js('mdEditor.commands.execute("view.toggleRuler")');
-  check('ruler can be hidden', await js('document.querySelector("#ruler").hidden'), true);
+  check('rulers can be hidden', await js('[...document.querySelectorAll(".ruler")].every((r) => r.hidden)'), true);
   await js('mdEditor.commands.execute("view.toggleRuler")');
 
   // macOS "smart dashes" arrive as an OS replacement, not as typing.
@@ -79,6 +79,28 @@ export async function runBrowserChecks() {
   await sleep(100);
   check('ruled lines move with the scrolled text',
     await js('document.querySelector("#notebook").style.getPropertyValue("--scroll-y")'), '137px');
+
+  // Text-width ruler: start narrow (4″) so both sheets are narrower than
+  // their panes, then drag the editor's right marker 48px outward.
+  await js('mdEditor.preferences.set("textWidth", 384)');
+  await sleep(100);
+  const marker = JSON.parse(await js(`JSON.stringify(document.querySelector('.pane--source .ruler__marker--right').getBoundingClientRect())`));
+  const sheetBefore = await js(`document.querySelector('.pane--preview .page').getBoundingClientRect().width`);
+  await app.drag(marker.x + marker.width / 2, marker.y + marker.height / 2, marker.x + marker.width / 2 + 48, marker.y + marker.height / 2);
+  await sleep(100);
+  check('dragging a ruler marker widens the text column by 2 × 48px',
+    await js('mdEditor.preferences.get("textWidth")'), 480);
+  check('…and the OTHER sheet follows (shared width)',
+    await js(`document.querySelector('.pane--preview .page').getBoundingClientRect().width`) > sheetBefore, true);
+  check('markers sit exactly on the text edge',
+    await js(`(() => {
+      const m = document.querySelector('.pane--source .ruler__marker--left').getBoundingClientRect();
+      const t = document.querySelector('#editor');
+      const left = t.getBoundingClientRect().left + parseFloat(getComputedStyle(t).paddingLeft);
+      return Math.abs((m.left + m.width / 2) - left) < 1;
+    })()`), true);
+  await js(`document.querySelector('.ruler__marker').dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))`);
+  check('double-click resets the width', await js('mdEditor.preferences.get("textWidth")'), 720);
 
   check('no errors or warnings in the console', app.consoleProblems, []);
   await app.close();

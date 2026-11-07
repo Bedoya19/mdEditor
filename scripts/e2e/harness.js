@@ -99,6 +99,15 @@ export async function openApp({ appPort, debugPort, initScript }) {
     value: () => js('document.querySelector("#editor").value'),
     select: (start, end) => js(`document.querySelector("#editor").setSelectionRange(${start}, ${end})`),
     consoleProblems,
+    /** Presses the mouse at (x1, y1), moves to (x2, y2) in steps, releases. */
+    drag: async (x1, y1, x2, y2, steps = 8) => {
+      await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: x1, y: y1, button: 'left', clickCount: 1 });
+      for (let i = 1; i <= steps; i++) {
+        const t = i / steps;
+        await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: x1 + (x2 - x1) * t, y: y1 + (y2 - y1) * t, button: 'left', buttons: 1 });
+      }
+      await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: x2, y: y2, button: 'left', clickCount: 1 });
+    },
     /** Saves a PNG of the page (or of `clip` = {x, y, width, height, scale}). Handy when debugging a check. */
     screenshot: async (file, clip) => {
       const { result } = await send('Page.captureScreenshot', clip ? { clip } : {});

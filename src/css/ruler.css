@@ -1,21 +1,42 @@
 /**
- * ruler.css — TextEdit's measuring ruler.
- * Ticks are pure CSS: three repeating gradient layers (inch, half, eighth).
- * Numbers are positioned by js/ui/Ruler.js at the same 96px spacing.
+ * ruler.css — the text-width ruler on top of each page (js/ui/Ruler.js).
+ *
+ * Geometry is pure CSS, driven by two variables set on .workspace:
+ *   --sheet-pad   space between the sheet's edge and the text (the margins)
+ *   --ruler-unit  one inch on screen (96px × zoom)
+ * The white strip is the text column, the grey ends are the margins, and the
+ * two markers sit exactly on the text edges.
  */
 .ruler {
   position: relative;
   flex: none;
-  height: 20px;
+  height: 22px;
+  margin-bottom: 5px;
   overflow: hidden;
   user-select: none;
-  border-bottom: 1px solid #9c9c9c;
-  box-shadow: inset 0 1px 0 #fff;
+  border-radius: 3px;
+  /* The outline is a shadow ring, NOT a border: a border would shift every
+     marker and number 1px to the right of the text edge they mark. */
+  box-shadow: 0 0 0 1px #a6a6a6, 0 1px 3px rgba(0, 0, 0, 0.3), inset 0 1px 0 #fff;
   background:
-    linear-gradient(to right, #6b6b6b 1px, transparent 1px) 0 100% / 96px 9px repeat-x,
-    linear-gradient(to right, #8a8a8a 1px, transparent 1px) 0 100% / 48px 6px repeat-x,
-    linear-gradient(to right, #a8a8a8 1px, transparent 1px) 0 100% / 12px 3px repeat-x,
-    linear-gradient(#fbfbfb, #e6e6e6);
+    /* ticks start at the left text edge: inch / half / eighth */
+    linear-gradient(to right, #6b6b6b 1px, transparent 1px)
+      var(--sheet-pad) 100% / var(--ruler-unit) 9px repeat-x,
+    linear-gradient(to right, #8a8a8a 1px, transparent 1px)
+      var(--sheet-pad) 100% / calc(var(--ruler-unit) / 2) 6px repeat-x,
+    linear-gradient(to right, #a8a8a8 1px, transparent 1px)
+      var(--sheet-pad) 100% / calc(var(--ruler-unit) / 8) 3px repeat-x,
+    /* grey margins, white text column */
+    linear-gradient(to right,
+      rgba(0, 0, 0, 0.09) var(--sheet-pad),
+      transparent var(--sheet-pad) calc(100% - var(--sheet-pad)),
+      rgba(0, 0, 0, 0.09) calc(100% - var(--sheet-pad))),
+    linear-gradient(#fdfdfd, #e9e9e9);
+}
+
+.ruler__scale {
+  position: absolute;
+  inset: 0;
 }
 
 .ruler__number {
@@ -25,4 +46,32 @@
   font-size: 9px;
   color: #5c5c5c;
   text-shadow: 0 1px 0 #fff;
+}
+
+/* ── Margin markers: little blue-grey triangles pointing up ── */
+.ruler__marker {
+  position: absolute;
+  bottom: 0;
+  width: 13px;
+  height: 11px;
+  margin-left: -6.5px;   /* centre the tip on the text edge */
+  cursor: ew-resize;
+  touch-action: none;    /* let pointer events handle the drag on touch screens */
+  background: linear-gradient(#a9c8ee, #4f7fbf);
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.8));
+}
+
+.ruler__marker--left { left: var(--sheet-pad); }
+.ruler__marker--right { left: calc(100% - var(--sheet-pad)); }
+
+.ruler__marker:hover,
+.ruler.is-dragging .ruler__marker {
+  background: linear-gradient(#c3dbf8, #3a6fb6);
+}
+
+/* clip-path would cut off the usual focus glow, so focus recolours the marker. */
+.ruler__marker:focus-visible {
+  box-shadow: none;
+  background: linear-gradient(#ffd27a, #e08a00);
 }

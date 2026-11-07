@@ -118,24 +118,29 @@
       </div>
     </div>
 
-    <!-- Decorative ruler (numbers added by js/ui/Ruler.js) -->
-    <div id="ruler" class="ruler" aria-hidden="true"></div>
-
-    <!-- Writing desk with the paper sheets -->
+    <!-- Writing desk with the paper sheets.
+         Each .page = a ruler + a paper of the same width. The ruler's two
+         margin markers set the text column width (js/ui/Ruler.js). -->
     <main id="workspace" class="workspace" data-view="split">
       <section class="pane pane--source" aria-label="Markdown source">
-        <div id="notebook" class="paper paper--notebook">
-          <!-- A SOURCE editor: spell-check underlines are fine, but the OS must
-               never rewrite what you type (smart dashes/quotes, autocorrect,
-               auto-capitalisation would silently change your Markdown). -->
-          <textarea id="editor" class="editor" spellcheck="true" autocorrect="off"
-                    autocapitalize="off" autocomplete="off"
-                    aria-label="Markdown source" placeholder="Start writing…"></textarea>
+        <div class="page">
+          <div class="ruler" data-role="ruler"></div>
+          <div id="notebook" class="paper paper--notebook">
+            <!-- A SOURCE editor: spell-check underlines are fine, but the OS must
+                 never rewrite what you type (smart dashes/quotes, autocorrect,
+                 auto-capitalisation would silently change your Markdown). -->
+            <textarea id="editor" class="editor" spellcheck="true" autocorrect="off"
+                      autocapitalize="off" autocomplete="off"
+                      aria-label="Markdown source" placeholder="Start writing…"></textarea>
+          </div>
         </div>
       </section>
       <section class="pane pane--preview" aria-label="Preview">
-        <div id="preview-scroller" class="paper paper--printed">
-          <article id="preview" class="markdown"></article>
+        <div class="page">
+          <div class="ruler" data-role="ruler"></div>
+          <div id="preview-scroller" class="paper paper--printed">
+            <article id="preview" class="markdown"></article>
+          </div>
         </div>
       </section>
     </main>

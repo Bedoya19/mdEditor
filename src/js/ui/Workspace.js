@@ -27,6 +27,11 @@ export class Workspace {
     this.root.style.setProperty('--editor-font', font.stack);
   }
 
+  /** @param {number} px  Text column width at 100 % zoom (CSS: --text-width). */
+  setTextWidth(px) {
+    this.root.style.setProperty('--text-width', `${Number(px)}px`);
+  }
+
   /**
    * Sets the font size AND a whole-pixel line height. The source paper draws
    * notebook-style ruled lines every `--editor-line` px; a rounded value keeps

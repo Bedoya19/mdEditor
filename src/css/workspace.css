@@ -3,9 +3,21 @@
  *
  * View modes are pure CSS: js/ui/Workspace.js only sets
  * data-view="edit|split|preview" and these rules show/hide panes.
+ *
+ * Sheet geometry comes from three variables (set by js/ui/Workspace.js):
+ *   --text-width  width of the text column, unzoomed (the ruler sets it)
+ *   --zoom        magnification of the sheets (1 = 100 %)
+ *   --sheet-pad   the margin between a sheet's edge and its text
+ * Both sheets use the same values, so the editor and the preview always have
+ * the same column width.
  */
 
 .workspace {
+  --text-width: 720px;
+  --zoom: 1;
+  --sheet-pad: calc(64px * var(--zoom));
+  --ruler-unit: calc(96px * var(--zoom));
+
   display: flex;
   flex: 1;
   min-height: 0;
@@ -39,7 +51,24 @@
   }
   .workspace {
     --gutter: 10px;
+    --sheet-pad: calc(28px * var(--zoom));
   }
+}
+
+/* A page = its ruler + its paper, one width, centred in the pane. When the
+   pane is narrower than the requested width, the page simply fills it.
+   (Named "page", not "sheet": .sheet is the save-changes dialog.) */
+.page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: calc(var(--text-width) * var(--zoom) + 2 * var(--sheet-pad));
+  min-width: 0;
+  min-height: 0;
+}
+
+.page > .paper {
+  flex: 1;
 }
 
 /* ── Paper ──────────────────────────────────────────────────── */
@@ -47,7 +76,6 @@
   position: relative;
   display: flex;
   width: 100%;
-  max-width: var(--paper-max);
   min-height: 0;
   overflow: hidden;
   border-radius: 2px;
@@ -78,16 +106,15 @@
  * text's line-height, so every line of text sits on a rule.
  */
 .paper--notebook {
-  --pad-top: 40px;
-  --pad-left: 64px;
+  --pad-top: calc(40px * var(--zoom));
   --scroll-y: 0px;
 
   background:
     /* red margin line */
     linear-gradient(to right,
-      transparent calc(var(--pad-left) - 16px),
-      var(--paper-margin) calc(var(--pad-left) - 16px) calc(var(--pad-left) - 15px),
-      transparent calc(var(--pad-left) - 15px)),
+      transparent calc(var(--sheet-pad) - 16px),
+      var(--paper-margin) calc(var(--sheet-pad) - 16px) calc(var(--sheet-pad) - 15px),
+      transparent calc(var(--sheet-pad) - 15px)),
     /* one rule at the bottom of each line box */
     linear-gradient(transparent calc(var(--editor-line) - 1px), var(--paper-rule) 0)
       0 calc(var(--pad-top) - var(--scroll-y)) / 100% var(--editor-line) repeat-y,
@@ -97,8 +124,7 @@
 
 @media (max-width: 760px) {
   .paper--notebook {
-    --pad-top: 24px;
-    --pad-left: 36px;
+    --pad-top: calc(24px * var(--zoom));
   }
 }
 
@@ -107,7 +133,7 @@
   width: 100%;
   min-height: 0;
   margin: 0;
-  padding: var(--pad-top) 48px 48px var(--pad-left);
+  padding: var(--pad-top) var(--sheet-pad) calc(48px * var(--zoom));
   resize: none;
   border: 0;
   outline: 0;
@@ -125,11 +151,6 @@
   font-style: italic;
 }
 
-@media (max-width: 760px) {
-  .editor {
-    padding-right: 20px;
-  }
-}
 
 /* ── Drag & drop overlay ───────────────────────────────────── */
 .drop-overlay {

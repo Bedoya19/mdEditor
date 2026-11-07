@@ -3,15 +3,17 @@
  * Scoped under .markdown so it never leaks into the app's chrome.
  */
 .markdown {
-  padding: 44px 64px 80px;
-  font: 15px/1.65 var(--font-reading);
+  /* Same side margins as the editor (--sheet-pad), so both columns match. */
+  padding: calc(44px * var(--zoom)) var(--sheet-pad) calc(80px * var(--zoom));
+  font: calc(15px * var(--zoom)) / 1.65 var(--font-reading);
   color: #232323;
   overflow-wrap: break-word;
 }
 
 @media (max-width: 760px) {
   .markdown {
-    padding: 24px 22px 48px;
+    padding-top: calc(24px * var(--zoom));
+    padding-bottom: calc(48px * var(--zoom));
   }
 }
 

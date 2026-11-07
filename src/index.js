@@ -23,7 +23,7 @@ import { CommandRegistry } from './js/core/CommandRegistry.js';
 import { KeyboardShortcuts } from './js/core/KeyboardShortcuts.js';
 // Models
 import { MarkdownDocument } from './js/model/MarkdownDocument.js';
-import { Preferences } from './js/model/Preferences.js';
+import { Preferences, DEFAULT_PREFERENCES } from './js/model/Preferences.js';
 import { countStats, cursorPosition } from './js/model/documentStats.js';
 // Markdown
 import { MarkdownParser } from './js/markdown/MarkdownParser.js';
@@ -80,7 +80,12 @@ fillSelect($('#font-size'), FONT_SIZES.map((size) => ({ value: size, label: Stri
 const editor = new EditorView($('#editor'));
 const preview = new PreviewView($('#preview'), $('#preview-scroller'));
 const workspace = new Workspace($('#workspace'));
-const ruler = new Ruler($('#ruler'));
+// One ruler per sheet; both edit the same shared text width.
+const rulers = [...document.querySelectorAll('[data-role="ruler"]')].map((el) => new Ruler(el, {
+  getWidth: () => preferences.get('textWidth'),
+  onWidthChange: (px) => preferences.set('textWidth', px),
+  onReset: () => preferences.set('textWidth', DEFAULT_PREFERENCES.textWidth),
+}));
 const statusBar = new StatusBar($('#statusbar'));
 const sheet = new SheetDialog($('#sheet'), $('.chrome', windowEl));
 // Desktop: macOS itself zooms on title-bar double-click (Tauri drag region),
@@ -158,7 +163,8 @@ const applyPreference = {
   viewMode: (mode) => { workspace.setViewMode(mode); toolbar.setValue('view.setMode', mode); },
   editorFont: (key) => { workspace.setEditorFont(key); toolbar.setValue('view.setFont', key); },
   fontSize: (px) => { workspace.setFontSize(px); toolbar.setValue('view.setFontSize', px); },
-  showRuler: (show) => { ruler.setVisible(show); toolbar.setValue('view.toggleRuler', show); },
+  showRuler: (show) => { rulers.forEach((r) => r.setVisible(show)); toolbar.setValue('view.toggleRuler', show); },
+  textWidth: (px) => { workspace.setTextWidth(px); rulers.forEach((r) => r.refresh()); },
 };
 preferences.on('change', ({ key, value }) => applyPreference[key]?.(value));
 Object.entries(applyPreference).forEach(([key, apply]) => apply(preferences.get(key)));
