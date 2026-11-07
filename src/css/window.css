@@ -1,0 +1,170 @@
+/**
+ * window.css — the window frame, title bar and traffic lights.
+ */
+
+.window {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1320px;
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-window);
+  background: var(--desk);
+  box-shadow: var(--shadow-window);
+}
+
+html[data-platform="desktop"] .window,
+:fullscreen .window {
+  max-width: none;
+  border-radius: 0;
+}
+
+@media (max-width: 700px) {
+  .window {
+    border-radius: 0;
+  }
+}
+
+/* ── Unified title bar + toolbar: one sheet of brushed aluminium ── */
+.chrome {
+  flex: none;
+  user-select: none;
+  background:
+    var(--texture-brushed),
+    linear-gradient(var(--metal-top), var(--metal-bottom));
+  border-bottom: 1px solid var(--metal-edge);
+  box-shadow: inset 0 1px 0 var(--metal-highlight);
+}
+
+.titlebar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 80px; /* keep the centred title clear of the traffic lights */
+}
+
+/*
+ * Desktop app: macOS draws its REAL traffic lights on top of our title bar
+ * (tauri.conf.json: titleBarStyle "Overlay", trafficLightPosition), so our
+ * CSS ones are hidden. Window dragging comes from the data-tauri-drag-region
+ * attribute in index.html, not from CSS.
+ */
+html[data-platform="desktop"] .traffic-lights {
+  display: none;
+}
+
+.titlebar__title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  margin: 0;
+  font-size: 13px;
+  font-weight: normal;
+  color: #3b3b3b;
+  text-shadow: 0 1px 0 var(--ink-engraved);
+  white-space: nowrap;
+}
+
+.titlebar__title > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.titlebar__edited {
+  color: #7c7c7c;
+}
+
+.titlebar__icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: #777;
+  stroke-width: 0.9;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+}
+
+/* ── Traffic lights ─────────────────────────────────────────── */
+/*
+ * Modelled on CURRENT macOS (Big Sur and later), not Aqua: 12px flat discs
+ * with a 0.5px darker rim, 8px apart. They're already the most "physical"
+ * element of the modern Mac UI, so a glossy redesign would look less native,
+ * not more. Hover glyphs are inline SVGs so they stay crisp at any zoom.
+ */
+.traffic-lights {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  display: flex;
+  gap: 8px;
+  transform: translateY(-50%);
+}
+
+.light {
+  --fill: var(--light-disabled);
+  --rim: var(--light-disabled-rim);
+  position: relative;
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--fill);
+  box-shadow: inset 0 0 0 0.5px var(--rim);
+}
+
+.light--close { --fill: var(--light-close); --rim: var(--light-close-rim); }
+.light--minimize { --fill: var(--light-minimize); --rim: var(--light-minimize-rim); }
+.light--zoom { --fill: var(--light-zoom); --rim: var(--light-zoom-rim); }
+
+/* Glyph layer: hidden until the pointer is over the group, like macOS. */
+.light::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: center / 12px 12px no-repeat;
+  opacity: 0;
+}
+.light--close::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3.8 3.8l4.4 4.4M8.2 3.8L3.8 8.2' stroke='%234d0000' stroke-width='1.1' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+.light--minimize::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3.2 6h5.6' stroke='%23995700' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+/* Zoom shows the two-triangle "full screen" glyph of modern macOS. */
+.light--zoom::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3.6 5.1v3.3h3.3zM8.4 6.9V3.6H5.1z' fill='%23006500'/%3E%3C/svg%3E");
+}
+
+.traffic-lights:hover .light::after {
+  opacity: 1;
+}
+
+.light:active {
+  filter: brightness(0.85);
+}
+
+/* Unsaved changes: a dark dot in the close button (macOS convention);
+   hovering still reveals the ×. */
+.window.is-dirty .light--close::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Ccircle cx='6' cy='6' r='1.9' fill='%234d0000' fill-opacity='.75'/%3E%3C/svg%3E");
+  opacity: 1;
+}
+.window.is-dirty .traffic-lights:hover .light--close::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3.8 3.8l4.4 4.4M8.2 3.8L3.8 8.2' stroke='%234d0000' stroke-width='1.1' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* A browser tab can't minimise itself, so the button is shown the way
+   macOS shows an unavailable one: grey, with no glyph. */
+html[data-platform="browser"] .light--minimize {
+  --fill: var(--light-disabled);
+  --rim: var(--light-disabled-rim);
+}
+html[data-platform="browser"] .light--minimize::after {
+  display: none;
+}

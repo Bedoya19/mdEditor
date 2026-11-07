@@ -1,0 +1,168 @@
+<!doctype html>
+<!--
+  index.html — the app's STRUCTURE only.
+  • Looks live in styles.css (+ css/*.css). Behaviour lives in index.js (+ js/**).
+  • Buttons declare what they do with data-command="…" (see js/ui/Toolbar.js);
+    no inline onclick handlers, so HTML stays readable and logic stays in JS.
+  • Ids are looked up once, in index.js, through a helper that fails loudly
+    if one goes missing.
+-->
+<html lang="en" data-platform="browser">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Markdown Editor</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='5' y='2' width='22' height='28' rx='2' fill='%23fdfcf7' stroke='%23888'/%3E%3Cpath d='M9 11h14M9 15h14M9 19h10M9 23h12' stroke='%23999'/%3E%3Cpath d='M18 2l9 9h-7a2 2 0 0 1-2-2z' fill='%23ddd'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="index.js"></script>
+</head>
+<body>
+
+  <!-- ═══════════ Icon sprite: every toolbar glyph, defined once ═══════════ -->
+  <svg xmlns="http://www.w3.org/2000/svg" hidden>
+    <symbol id="i-new" viewBox="0 0 16 16"><path d="M4 1.5h5.5L13 5v9.5H4z"/><path d="M9.5 1.5V5H13"/><path d="M8.5 8v4M6.5 10h4"/></symbol>
+    <symbol id="i-open" viewBox="0 0 16 16"><path d="M1.5 3.5h4l1.5 1.5h6.5v8.5h-12z"/><path d="M1.5 7h12"/></symbol>
+    <symbol id="i-save" viewBox="0 0 16 16"><path d="M8 1.5v8M5 6.5l3 3 3-3"/><path d="M2 10.5v3.5h12v-3.5"/></symbol>
+    <symbol id="i-bullet" viewBox="0 0 16 16"><circle cx="3" cy="4" r="1" fill="currentColor"/><circle cx="3" cy="8" r="1" fill="currentColor"/><circle cx="3" cy="12" r="1" fill="currentColor"/><path d="M6 4h8.5M6 8h8.5M6 12h8.5"/></symbol>
+    <symbol id="i-ordered" viewBox="0 0 16 16"><path d="M2 2.5h1v3M2 5.5h2" stroke-width="1"/><path d="M1.8 9.5h2l-2 3h2" stroke-width="1"/><path d="M6.5 4h8M6.5 11h8"/></symbol>
+    <symbol id="i-task" viewBox="0 0 16 16"><rect x="1.5" y="2.5" width="4" height="4" rx=".8"/><path d="M2.4 4.5l1 1 1.6-2"/><rect x="1.5" y="9.5" width="4" height="4" rx=".8"/><path d="M8 4.5h6.5M8 11.5h6.5"/></symbol>
+    <symbol id="i-link" viewBox="0 0 16 16"><path d="M7 9a3 3 0 0 0 4.2 0l2.3-2.3a3 3 0 0 0-4.2-4.2L8.5 3.3"/><path d="M9 7a3 3 0 0 0-4.2 0L2.5 9.3a3 3 0 0 0 4.2 4.2l.8-.8"/></symbol>
+    <symbol id="i-codeblock" viewBox="0 0 16 16"><path d="M5 4L1.5 8 5 12M11 4l3.5 4-3.5 4M9.3 2.5l-2.6 11"/></symbol>
+    <symbol id="i-table" viewBox="0 0 16 16"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M1.5 6h13M1.5 9.8h13M6 6v7.5M10.5 6v7.5"/></symbol>
+    <symbol id="i-rule" viewBox="0 0 16 16"><path d="M1.5 8h13"/><path d="M4 4.5h8M4 11.5h8" stroke-opacity=".35"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 16 16"><path d="M11 2l3 3-8.5 8.5H2.5v-3z"/><path d="M9.5 3.5l3 3"/></symbol>
+    <symbol id="i-split" viewBox="0 0 16 16"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M8 2.5v11M3.5 5.5h2.5M3.5 8h2.5M10 5.5h2.5M10 8h2.5"/></symbol>
+    <symbol id="i-preview" viewBox="0 0 16 16"><path d="M1 8s2.5-4.5 7-4.5S15 8 15 8s-2.5 4.5-7 4.5S1 8 1 8z"/><circle cx="8" cy="8" r="2"/></symbol>
+    <symbol id="i-ruler" viewBox="0 0 16 16"><rect x="1" y="5" width="14" height="6" rx="1"/><path d="M4 5v2.5M7 5v1.5M10 5v2.5M13 5v1.5"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 16 16"><path d="M3.5 1.5h6L13 5v9.5H3.5z" fill="#fdfcf7"/><path d="M9.5 1.5V5H13" fill="#e6e3d8"/><path d="M5.5 8h5.5M5.5 10h5.5M5.5 12h3.5" stroke-opacity=".5"/></symbol>
+  </svg>
+
+  <!-- ═══════════ The window ═══════════ -->
+  <div id="window" class="window">
+
+    <!-- Title bar + toolbar share one brushed-metal surface ("unified toolbar").
+         data-tauri-drag-region="deep": in the desktop app, dragging any empty
+         part of it moves the window (buttons/popups stay clickable). Ignored
+         by browsers. -->
+    <div class="chrome" data-tauri-drag-region="deep">
+      <header id="titlebar" class="titlebar">
+        <!-- Browser only: in the desktop app macOS draws its real traffic lights here. -->
+        <div class="traffic-lights">
+          <button type="button" class="light light--close" data-command="window.close" aria-label="Close" title="Close"></button>
+          <button type="button" class="light light--minimize" data-command="window.minimize" aria-label="Minimize" title="Minimize (desktop app only)"></button>
+          <button type="button" class="light light--zoom" data-command="window.zoom" aria-label="Zoom" title="Zoom"></button>
+        </div>
+        <h1 class="titlebar__title">
+          <svg class="titlebar__icon" aria-hidden="true"><use href="#i-doc"/></svg>
+          <span data-role="doc-name">Untitled.md</span>
+          <span class="titlebar__edited" data-role="doc-edited" hidden>— Edited</span>
+        </h1>
+      </header>
+
+      <div class="toolbar" role="toolbar" aria-label="Formatting">
+        <!-- File -->
+        <div class="toolbar__group capsule">
+          <button type="button" class="tool" data-command="file.new" title="New"><svg class="icon"><use href="#i-new"/></svg></button>
+          <button type="button" class="tool" data-command="file.open" title="Open…"><svg class="icon"><use href="#i-open"/></svg></button>
+          <button type="button" class="tool" data-command="file.save" title="Save"><svg class="icon"><use href="#i-save"/></svg></button>
+        </div>
+
+        <!-- Paragraph style (TextEdit's ¶ popup) -->
+        <label class="popup popup--wide" title="Paragraph Style">
+          <span class="popup__pilcrow" aria-hidden="true">¶</span>
+          <select id="paragraph-style" data-command="format.paragraphStyle" aria-label="Paragraph style"></select>
+        </label>
+
+        <!-- Character styles -->
+        <div class="toolbar__group capsule">
+          <button type="button" class="tool tool--glyph" data-command="format.bold" title="Bold" aria-label="Bold"><b>B</b></button>
+          <button type="button" class="tool tool--glyph" data-command="format.italic" title="Italic" aria-label="Italic"><i>I</i></button>
+          <button type="button" class="tool tool--glyph" data-command="format.strikethrough" title="Strikethrough" aria-label="Strikethrough"><s>S</s></button>
+          <button type="button" class="tool tool--glyph tool--mono" data-command="format.code" title="Inline Code" aria-label="Inline code">&lt;/&gt;</button>
+        </div>
+
+        <!-- Lists -->
+        <div class="toolbar__group capsule">
+          <button type="button" class="tool" data-command="format.bulletList" title="Bulleted List"><svg class="icon"><use href="#i-bullet"/></svg></button>
+          <button type="button" class="tool" data-command="format.orderedList" title="Numbered List"><svg class="icon"><use href="#i-ordered"/></svg></button>
+          <button type="button" class="tool" data-command="format.taskList" title="Checklist"><svg class="icon"><use href="#i-task"/></svg></button>
+        </div>
+
+        <!-- Insert -->
+        <div class="toolbar__group capsule">
+          <button type="button" class="tool" data-command="format.link" title="Link"><svg class="icon"><use href="#i-link"/></svg></button>
+          <button type="button" class="tool" data-command="format.codeBlock" title="Code Block"><svg class="icon"><use href="#i-codeblock"/></svg></button>
+          <button type="button" class="tool" data-command="insert.table" title="Insert Table"><svg class="icon"><use href="#i-table"/></svg></button>
+          <button type="button" class="tool" data-command="insert.rule" title="Insert Horizontal Rule"><svg class="icon"><use href="#i-rule"/></svg></button>
+        </div>
+
+        <div class="toolbar__spacer"></div>
+
+        <!-- Editor font (view-only: Markdown has no fonts) -->
+        <label class="popup" title="Editor Font">
+          <select id="editor-font" data-command="view.setFont" aria-label="Editor font"></select>
+        </label>
+        <label class="popup popup--narrow" title="Font Size">
+          <select id="font-size" data-command="view.setFontSize" aria-label="Font size"></select>
+        </label>
+
+        <button type="button" class="tool tool--solo" data-command="view.toggleRuler" title="Show Ruler" aria-pressed="true"><svg class="icon"><use href="#i-ruler"/></svg></button>
+
+        <!-- View mode: segmented control -->
+        <div class="toolbar__group capsule segmented" role="group" aria-label="View mode">
+          <button type="button" class="tool" data-command="view.setMode" data-arg="edit" title="Editor Only" aria-pressed="false"><svg class="icon"><use href="#i-edit"/></svg></button>
+          <button type="button" class="tool" data-command="view.setMode" data-arg="split" title="Side by Side" aria-pressed="true"><svg class="icon"><use href="#i-split"/></svg></button>
+          <button type="button" class="tool" data-command="view.setMode" data-arg="preview" title="Preview Only" aria-pressed="false"><svg class="icon"><use href="#i-preview"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decorative ruler (numbers added by js/ui/Ruler.js) -->
+    <div id="ruler" class="ruler" aria-hidden="true"></div>
+
+    <!-- Writing desk with the paper sheets -->
+    <main id="workspace" class="workspace" data-view="split">
+      <section class="pane pane--source" aria-label="Markdown source">
+        <div class="paper">
+          <textarea id="editor" class="editor" spellcheck="true" autocapitalize="sentences"
+                    aria-label="Markdown source" placeholder="Start writing…"></textarea>
+        </div>
+      </section>
+      <section class="pane pane--preview" aria-label="Preview">
+        <div id="preview-scroller" class="paper paper--printed">
+          <article id="preview" class="markdown"></article>
+        </div>
+      </section>
+    </main>
+
+    <footer id="statusbar" class="statusbar">
+      <span data-role="stats"></span>
+      <span class="statusbar__message" data-role="message" aria-live="polite"></span>
+      <span data-role="caret"></span>
+    </footer>
+
+    <!-- Drag & drop overlay -->
+    <div id="drop-overlay" class="drop-overlay" hidden>
+      <div class="drop-overlay__card">
+        <svg class="drop-overlay__icon" aria-hidden="true"><use href="#i-doc"/></svg>
+        Drop a Markdown file to open it
+      </div>
+    </div>
+
+    <!-- macOS-style sheet dialog (see js/ui/SheetDialog.js) -->
+    <dialog id="sheet" class="sheet" aria-labelledby="sheet-title">
+      <div class="sheet__body">
+        <svg class="sheet__icon" aria-hidden="true"><use href="#i-doc"/></svg>
+        <div class="sheet__text">
+          <h2 id="sheet-title" class="sheet__title" data-role="sheet-title"></h2>
+          <p class="sheet__message" data-role="sheet-message"></p>
+        </div>
+      </div>
+      <div class="sheet__buttons" data-role="sheet-buttons"></div>
+    </dialog>
+  </div>
+
+  <noscript>Markdown Editor needs JavaScript enabled.</noscript>
+</body>
+</html>

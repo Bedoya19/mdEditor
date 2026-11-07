@@ -1,0 +1,28 @@
+/**
+ * styles.css — STYLESHEET ENTRY POINT
+ *
+ * Only imports, in cascade order. Each file styles one part of the UI so you
+ * can find any rule by asking "which component is this?":
+ *
+ *   tokens     → design variables (colours, textures, fonts…). Start here.
+ *   base       → reset + the page/desktop background
+ *   window     → window frame, title bar, traffic lights
+ *   toolbar    → buttons, segmented controls, popups
+ *   ruler      → TextEdit ruler
+ *   workspace  → desk, paper sheets, editor, view modes, drop overlay
+ *   markdown   → rendered-preview typography
+ *   statusbar  → bottom bar
+ *   sheet      → save-changes dialog + Aqua buttons
+ *
+ * (Plain @import keeps the project build-free. For production you could
+ *  concatenate these files; for a local app the cost is negligible.)
+ */
+@import url("css/tokens.css");
+@import url("css/base.css");
+@import url("css/window.css");
+@import url("css/toolbar.css");
+@import url("css/ruler.css");
+@import url("css/workspace.css");
+@import url("css/markdown.css");
+@import url("css/statusbar.css");
+@import url("css/sheet.css");

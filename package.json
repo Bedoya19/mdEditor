@@ -1,0 +1,21 @@
+{
+  "name": "md-editor",
+  "version": "0.1.0",
+  "description": "A skeuomorphic, TextEdit-inspired Markdown reader & writer built with plain HTML, CSS and JavaScript.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.js",
+    "test": "node --test \"tests/**/*.test.js\"",
+    "test:e2e": "node scripts/e2e/run.js",
+    "desktop": "tauri dev",
+    "desktop:build": "tauri build",
+    "icon": "tauri icon assets/app-icon.png"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.12.4"
+  }
+}

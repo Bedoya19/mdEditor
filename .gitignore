@@ -1,0 +1,5 @@
+node_modules/
+.DS_Store
+
+# Personal Claude Code settings (machine-specific)
+.claude/settings.local.json

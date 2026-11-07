@@ -1,0 +1,89 @@
+/**
+ * tokens.css — DESIGN TOKENS
+ * Every colour, shadow, radius, font and texture used by the app, in one
+ * place. Component stylesheets only reference these variables, so the whole
+ * look (or a future dark "graphite" theme) can be changed from this file.
+ *
+ * AESTHETIC: TextEdit's layout, rendered in the skeuomorphic Aqua style of
+ * Mac OS X 10.4–10.6: brushed aluminium chrome, glossy "gumdrop" buttons,
+ * linen behind the window, real-looking paper with grain and shadows.
+ */
+:root {
+  /* ── Typography ─────────────────────────────────────────────── */
+  /* Lucida Grande was the Aqua system font; it still ships with macOS. */
+  --font-ui: "Lucida Grande", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-reading: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-display: "Hoefler Text", "Baskerville", Georgia, "Times New Roman", serif;
+  --font-mono: Menlo, "SF Mono", Consolas, "Liberation Mono", monospace;
+  --font-glyph: Georgia, "Times New Roman", serif; /* B / I / S buttons, like TextEdit */
+
+  /* Editor defaults (overridden at runtime by js/ui/Workspace.js) */
+  --editor-font: var(--font-mono);
+  --editor-font-size: 14px;
+  --editor-line: 24px;
+
+  /* ── Ink ────────────────────────────────────────────────────── */
+  --ink: #1e1e1e;
+  --ink-soft: #4d4d4d;
+  --ink-faint: #8a8a8a;
+  --ink-engraved: rgba(255, 255, 255, 0.8); /* text-shadow that "presses" labels into metal */
+  --link: #1b5cc4;
+  --error: #b3261e;
+  --selection: #b4d5fe;
+
+  /* ── Brushed aluminium (title bar, toolbar, status bar) ────── */
+  --metal-top: #ececec;
+  --metal-bottom: #c9c9c9;
+  --metal-edge: #808080;
+  --metal-highlight: rgba(255, 255, 255, 0.9);
+
+  /* ── Controls ───────────────────────────────────────────────── */
+  --control-border: #8e8e8e;
+  --control-face: linear-gradient(#ffffff 0%, #f3f3f3 49%, #e4e4e4 50%, #efefef 100%);
+  --control-face-pressed: linear-gradient(#b3b3b3 0%, #c4c4c4 49%, #bababa 50%, #d0d0d0 100%);
+  --control-inset: 0 1px 0 rgba(255, 255, 255, 0.65); /* light lip below controls */
+  --aqua-face: linear-gradient(#d4ecff 0%, #8cc4f7 49%, #5aa5ef 50%, #8fd0ff 100%);
+  --aqua-border: #3a6eb5;
+  --focus-ring: 0 0 0 3px rgba(84, 156, 247, 0.6);
+
+  /* ── Traffic lights (current macOS: flat fill + slightly darker rim) ── */
+  --light-close: #ff5f57;
+  --light-close-rim: #e0443e;
+  --light-minimize: #febc2e;
+  --light-minimize-rim: #dea123;
+  --light-zoom: #28c840;
+  --light-zoom-rim: #1aab29;
+  --light-disabled: #d4d4d4;     /* what macOS shows for an unavailable button */
+  --light-disabled-rim: #bdbdbd;
+
+  /* ── Paper & desk ───────────────────────────────────────────── */
+  --paper: #fffefb;
+  --paper-printed: #fdfbf5;
+  --paper-rule: rgba(110, 150, 205, 0.16);    /* notebook lines on the source sheet */
+  --paper-margin: rgba(214, 92, 92, 0.28);   /* red margin line */
+  --desk: #9ea2a8;
+
+  /* ── Geometry ───────────────────────────────────────────────── */
+  --radius-window: 9px;
+  --radius-control: 5px;
+  --gutter: 18px;
+  --paper-max: 860px;
+
+  /* ── Depth ──────────────────────────────────────────────────── */
+  --shadow-window:
+    0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 24px 64px rgba(0, 0, 0, 0.5),
+    0 8px 20px rgba(0, 0, 0, 0.3);
+  --shadow-paper:
+    0 0 0 1px rgba(0, 0, 0, 0.07),
+    0 1px 2px rgba(0, 0, 0, 0.22),
+    0 8px 22px rgba(0, 0, 0, 0.22);
+
+  /* ── Textures (inline SVG, no image files needed) ───────────── */
+  /* Fine grain: paper fibres, linen, felt. */
+  --texture-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* Same grain, much fainter: paper must still read as WHITE. */
+  --texture-paper: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .028 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* Brushed metal: noise stretched horizontally (low X frequency, high Y). */
+  --texture-brushed: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='120'%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.003 .9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23b)'/%3E%3C/svg%3E");
+}
