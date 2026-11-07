@@ -1,6 +1,8 @@
 /**
  * @file smartKeys.js
  * Writer-friendly keyboard behaviour inside the editor:
+ *   In a table: Tab / ⇧Tab → next / previous cell, Enter → cell below
+ *               (see tableTransforms.js)
  *   Enter      → continue lists / quotes (see continueList)
  *   Tab        → nest list items, or insert two spaces
  *   Shift+Tab  → outdent
@@ -12,11 +14,15 @@
  */
 
 import { continueList, indentLines, outdentLines, isOnListLine } from './textTransforms.js';
+import { nextCell, prevCell, nextRow } from './tableTransforms.js';
 
 /**
  * @param {import('../ui/EditorView.js').EditorView} editor
+ * @param {{autoFormatTables?: () => boolean}} [options]
+ *   autoFormatTables: read on every key press, so toggling the preference
+ *   takes effect immediately.
  */
-export function attachSmartKeys(editor) {
+export function attachSmartKeys(editor, { autoFormatTables = () => true } = {}) {
   let escapeArmed = false;
 
   editor.textarea.addEventListener('keydown', (event) => {
@@ -28,17 +34,21 @@ export function attachSmartKeys(editor) {
     if (leaveEditor) return; // let the browser move focus normally
 
     const state = editor.getState();
+    const multiLine = state.text.slice(state.start, state.end).includes('\n');
+    const table = { pad: autoFormatTables() };
     let edit = null;
 
+    // Tables first: each returns null when the caret isn't in a table, and
+    // the usual list behaviour below takes over.
     if (event.key === 'Enter' && !event.shiftKey) {
-      edit = continueList(state);
-    } else if (event.key === 'Tab' && event.shiftKey) {
-      edit = outdentLines(state);
+      edit = nextRow(state, table) ?? continueList(state);
     } else if (event.key === 'Tab') {
-      const multiLine = state.text.slice(state.start, state.end).includes('\n');
-      edit = multiLine || isOnListLine(state)
-        ? indentLines(state)
-        : { from: state.start, to: state.end, insert: '  ', selectStart: state.start + 2, selectEnd: state.start + 2 };
+      const moveInTable = event.shiftKey ? prevCell : nextCell;
+      const tableEdit = multiLine ? null : moveInTable(state, table);
+      if (tableEdit) edit = tableEdit;
+      else if (event.shiftKey) edit = outdentLines(state);
+      else if (multiLine || isOnListLine(state)) edit = indentLines(state);
+      else edit = { from: state.start, to: state.end, insert: '  ', selectStart: state.start + 2, selectEnd: state.start + 2 };
     }
 
     if (edit) {

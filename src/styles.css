@@ -8,7 +8,8 @@
  *   base       → reset + the page/desktop background
  *   window     → window frame, title bar, traffic lights
  *   toolbar    → buttons, segmented controls, popups
- *   ruler      → TextEdit ruler
+ *   popover    → dropdown menus from the toolbar (table menu + size picker)
+ *   ruler      → text-width ruler on each page
  *   workspace  → desk, paper sheets, editor, view modes, drop overlay
  *   markdown   → rendered-preview typography
  *   statusbar  → bottom bar
@@ -21,6 +22,7 @@
 @import url("css/base.css");
 @import url("css/window.css");
 @import url("css/toolbar.css");
+@import url("css/popover.css");
 @import url("css/ruler.css");
 @import url("css/workspace.css");
 @import url("css/markdown.css");

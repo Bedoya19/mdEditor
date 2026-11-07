@@ -7,7 +7,7 @@
  * object that owns the behaviour.
  */
 
-import { FORMAT_COMMANDS } from '../editor/formatCommands.js';
+import { FORMAT_COMMANDS, TABLE_COMMANDS } from '../editor/formatCommands.js';
 import { VIEW_MODES } from '../ui/Workspace.js';
 
 /**
@@ -17,8 +17,9 @@ import { VIEW_MODES } from '../ui/Workspace.js';
  * @param {import('../ui/EditorView.js').EditorView} deps.editor
  * @param {import('../model/Preferences.js').Preferences} deps.preferences
  * @param {import('../platform/WindowService.js').WindowService} deps.windowService
+ * @param {(message: string, kind?: 'info'|'error') => void} deps.notify  Status-bar messages.
  */
-export function registerCommands(commands, { documentController, editor, preferences, windowService }) {
+export function registerCommands(commands, { documentController, editor, preferences, windowService, notify }) {
   /* ── File ── */
   commands
     .register('file.new', () => documentController.newDocument(), 'New')
@@ -30,6 +31,19 @@ export function registerCommands(commands, { documentController, editor, prefere
   for (const { id, label, transform } of FORMAT_COMMANDS) {
     commands.register(id, (arg) => editor.applyEdit(transform(editor.getState(), arg)), label);
   }
+
+  /* ── Tables: same idea, plus the auto-format preference and a hint when
+        the command doesn't apply where the cursor is ── */
+  for (const { id, label, transform, unavailable } of TABLE_COMMANDS) {
+    commands.register(id, (arg) => {
+      const edit = transform(editor.getState(), arg, { pad: preferences.get('autoFormatTables') });
+      if (edit) editor.applyEdit(edit);
+      else if (unavailable) notify(unavailable);
+    }, label);
+  }
+  commands.register('table.toggleAutoFormat',
+    () => preferences.set('autoFormatTables', !preferences.get('autoFormatTables')),
+    'Format Tables Automatically');
 
   // Keyboard-friendly aliases for the paragraph-style popup.
   const paragraphStyle = (prefix) => () => commands.execute('format.paragraphStyle', prefix);

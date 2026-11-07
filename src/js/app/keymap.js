@@ -28,5 +28,7 @@ export const KEYMAP = {
   'alt+mod+3': 'format.heading3',
   'alt+mod+4': 'format.heading4',
 
+  'alt+mod+t': 'table.format',
+
   'mod+\\': 'view.cycle',
 };

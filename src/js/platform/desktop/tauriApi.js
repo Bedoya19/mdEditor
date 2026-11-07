@@ -66,23 +66,27 @@ export function createTauriApi(tauri) {
      * Builds the macOS menu bar from plain data (see DesktopMenu.js).
      * @param {{title: string, items: object[]}[]} spec
      * @param {(item: object) => void} onSelect  Called with the clicked item.
+     * @returns {Promise<{checkItems: {prefKey: string, setChecked: (on: boolean) => Promise<void>}[]}>}
+     *   Handles to update check marks later.
      */
     async setAppMenu(spec, onSelect) {
-      const { Menu, Submenu, MenuItem, PredefinedMenuItem } = menu;
-      const toNative = (item) => {
+      const { Menu, Submenu, MenuItem, CheckMenuItem, PredefinedMenuItem } = menu;
+      const checkItems = [];
+      const toNative = async (item) => {
         if (item.separator) return PredefinedMenuItem.new({ item: 'Separator' });
         if (item.predefined) return PredefinedMenuItem.new({ item: item.predefined, text: item.label });
-        return MenuItem.new({
-          id: item.id,
-          text: item.label,
-          accelerator: item.accelerator,
-          action: () => onSelect(item),
-        });
+        if (item.items) return Submenu.new({ text: item.title, items: await Promise.all(item.items.map(toNative)) });
+        const options = { id: item.id, text: item.label, accelerator: item.accelerator, action: () => onSelect(item) };
+        if (!item.check) return MenuItem.new(options);
+        const native = await CheckMenuItem.new({ ...options, checked: item.checked });
+        checkItems.push({ prefKey: item.check, setChecked: (on) => native.setChecked(on) });
+        return native;
       };
       const submenus = await Promise.all(spec.map(async ({ title, items }) =>
         Submenu.new({ text: title, items: await Promise.all(items.map(toNative)) })));
       const bar = await Menu.new({ items: submenus });
       await bar.setAsAppMenu();
+      return { checkItems };
     },
   };
 }

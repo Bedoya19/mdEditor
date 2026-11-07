@@ -93,7 +93,8 @@
         <div class="toolbar__group capsule">
           <button type="button" class="tool" data-command="format.link" title="Link"><svg class="icon"><use href="#i-link"/></svg></button>
           <button type="button" class="tool" data-command="format.codeBlock" title="Code Block"><svg class="icon"><use href="#i-codeblock"/></svg></button>
-          <button type="button" class="tool" data-command="insert.table" title="Insert Table"><svg class="icon"><use href="#i-table"/></svg></button>
+          <!-- Opens the table popover below (HTML popover API: no JS needed to open/close). -->
+          <button type="button" class="tool tool--menu" popovertarget="table-menu" title="Table" aria-label="Table"><svg class="icon"><use href="#i-table"/></svg><span class="tool__chevron" aria-hidden="true">▾</span></button>
           <button type="button" class="tool" data-command="insert.rule" title="Insert Horizontal Rule"><svg class="icon"><use href="#i-rule"/></svg></button>
         </div>
 
@@ -116,6 +117,31 @@
           <button type="button" class="tool" data-command="view.setMode" data-arg="preview" title="Preview Only" aria-pressed="false"><svg class="icon"><use href="#i-preview"/></svg></button>
         </div>
       </div>
+    </div>
+
+    <!-- Table popover (opened by the toolbar's table button).
+         Lives OUTSIDE .chrome on purpose: .chrome is a window drag region in the
+         desktop app, so clicks on the popover's background would drag the window.
+         Buttons use data-command like the toolbar; js/ui/PopoverMenu.js positions
+         it and closes it after a choice. -->
+    <div id="table-menu" class="popover-menu" popover aria-label="Table">
+      <div class="table-picker" data-role="table-picker"></div>
+      <div class="popover-menu__separator" role="separator"></div>
+      <button type="button" class="menu-item" data-command="table.rowAbove" data-requires="table">Add Row Above</button>
+      <button type="button" class="menu-item" data-command="table.rowBelow" data-requires="table">Add Row Below</button>
+      <button type="button" class="menu-item" data-command="table.colLeft" data-requires="table">Add Column Left</button>
+      <button type="button" class="menu-item" data-command="table.colRight" data-requires="table">Add Column Right</button>
+      <div class="popover-menu__separator" role="separator"></div>
+      <button type="button" class="menu-item" data-command="table.deleteRow" data-requires="table">Delete Row</button>
+      <button type="button" class="menu-item" data-command="table.deleteColumn" data-requires="table">Delete Column</button>
+      <div class="popover-menu__separator" role="separator"></div>
+      <button type="button" class="menu-item" data-command="table.alignLeft" data-requires="table">Align Column Left</button>
+      <button type="button" class="menu-item" data-command="table.alignCenter" data-requires="table">Align Column Center</button>
+      <button type="button" class="menu-item" data-command="table.alignRight" data-requires="table">Align Column Right</button>
+      <div class="popover-menu__separator" role="separator"></div>
+      <button type="button" class="menu-item" data-command="table.format" data-requires="table">Format Table<span class="menu-item__key" data-shortcut-for="table.format"></span></button>
+      <button type="button" class="menu-item menu-item--check" data-command="table.toggleAutoFormat" aria-pressed="true">Format Tables Automatically</button>
+      <p class="popover-menu__hint">In a table: <kbd>Tab</kbd> next cell · <kbd>⇧Tab</kbd> previous · <kbd>Enter</kbd> cell below</p>
     </div>
 
     <!-- Writing desk with the paper sheets.

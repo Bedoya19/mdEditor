@@ -30,6 +30,7 @@
  */
 
 import { escapeHtml, slugify } from './htmlUtils.js';
+import { TABLE_DELIMITER, splitRow, parseAlign } from './tableSyntax.js';
 
 /* ───────────────────────── helpers ───────────────────────── */
 
@@ -173,23 +174,18 @@ function renderListItem(itemLines, parser, tight) {
   return `<li class="task-list-item"><input type="checkbox" disabled${checked}> ${parser.parseLines(rest, { tight })}</li>`;
 }
 
-/** GitHub-style tables: header row, a |---|:---:| delimiter row, body rows. */
-const TABLE_DELIMITER = /^ *\|? *:?-+:? *(\| *:?-+:? *)*\|? *$/;
-const splitRow = (line) =>
-  line.trim().replace(/^\|/, '').replace(/(?<!\\)\|$/, '').split(/(?<!\\)\|/).map((c) => c.trim());
-
+/**
+ * GitHub-style tables: header row, a |---|:---:| delimiter row, body rows.
+ * What counts as a cell is defined in tableSyntax.js (shared with the
+ * editor's table tools).
+ */
 export const table = {
   name: 'table',
   interruptsParagraph: true,
   test: (lines, i) => lines[i].includes('|') && TABLE_DELIMITER.test(lines[i + 1] ?? ''),
   consume(lines, start, parser) {
     const headers = splitRow(lines[start]);
-    const aligns = splitRow(lines[start + 1]).map((cell) => {
-      if (cell.startsWith(':') && cell.endsWith(':')) return 'center';
-      if (cell.endsWith(':')) return 'right';
-      if (cell.startsWith(':')) return 'left';
-      return '';
-    });
+    const aligns = splitRow(lines[start + 1]).map(parseAlign);
     const cell = (tag, text, col) => {
       const style = aligns[col] ? ` style="text-align:${aligns[col]}"` : '';
       return `<${tag}${style}>${parser.inline(text ?? '')}</${tag}>`;

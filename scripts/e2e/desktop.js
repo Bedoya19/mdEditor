@@ -23,6 +23,7 @@ const FAKE_TAURI = `(() => {
     pending: ['/Users/me/notes.md'], // as if the app was launched by double-clicking notes.md
     handlers: {},
     menuItems: {},
+    submenus: [],
     dialog: { open: null, save: null },
   };
   window.__fake = fake;
@@ -45,8 +46,13 @@ const FAKE_TAURI = `(() => {
     },
     menu: {
       Menu: { new: async (o) => ({ ...o, setAsAppMenu: async () => { fake.log.push('menu installed'); } }) },
-      Submenu: { new: async (o) => o },
+      Submenu: { new: async (o) => { fake.submenus.push(o.text); return o; } },
       MenuItem: { new: async (o) => { fake.menuItems[o.id] = o; return o; } },
+      CheckMenuItem: { new: async (o) => {
+        const item = { ...o, setChecked: async (on) => { item.checked = on; } };
+        fake.menuItems[o.id] = item;
+        return item;
+      } },
       PredefinedMenuItem: { new: async (o) => o },
     },
   };
@@ -119,6 +125,14 @@ export async function runDesktopChecks() {
   await menu('app.quit');
   await sleep(100);
   check('Quit on a clean document closes without asking', await js('window.__fake.log.at(-1)'), 'destroy');
+
+  check('Format ▸ Table submenu exists', await js('window.__fake.submenus.includes("Table")'), true);
+  check('"Show Ruler" check mark reflects the preference',
+    await js('window.__fake.menuItems["view.toggleRuler"].checked'), true);
+  await js('mdEditor.preferences.set("showRuler", false)');
+  await sleep(50);
+  check('…and follows it when it changes', await js('window.__fake.menuItems["view.toggleRuler"].checked'), false);
+  await js('mdEditor.preferences.set("showRuler", true)');
 
   check('no errors or warnings in the console', app.consoleProblems, []);
   await app.close();

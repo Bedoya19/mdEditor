@@ -30,6 +30,7 @@ import { MarkdownParser } from './js/markdown/MarkdownParser.js';
 // Editor behaviour
 import { PARAGRAPH_STYLES } from './js/editor/formatCommands.js';
 import { detectLinePrefix } from './js/editor/textTransforms.js';
+import { isInTable } from './js/editor/tableTransforms.js';
 import { attachSmartKeys } from './js/editor/smartKeys.js';
 // Platform: browser here; the desktop one is loaded on demand (see step 1)
 import { createBrowserPlatform } from './js/platform/browser/createBrowserPlatform.js';
@@ -45,6 +46,8 @@ import { StatusBar } from './js/ui/StatusBar.js';
 import { Ruler } from './js/ui/Ruler.js';
 import { SheetDialog } from './js/ui/SheetDialog.js';
 import { ScrollSync } from './js/ui/ScrollSync.js';
+import { PopoverMenu } from './js/ui/PopoverMenu.js';
+import { TableSizePicker } from './js/ui/TableSizePicker.js';
 // Application
 import { DocumentController } from './js/app/DocumentController.js';
 import { registerCommands } from './js/app/registerCommands.js';
@@ -87,6 +90,8 @@ const rulers = [...document.querySelectorAll('[data-role="ruler"]')].map((el) =>
   onReset: () => preferences.set('textWidth', DEFAULT_PREFERENCES.textWidth),
 }));
 const statusBar = new StatusBar($('#statusbar'));
+new TableSizePicker($('[data-role="table-picker"]'));
+new PopoverMenu($('#table-menu'));
 const sheet = new SheetDialog($('#sheet'), $('.chrome', windowEl));
 // Desktop: macOS itself zooms on title-bar double-click (Tauri drag region),
 // so we only handle it in the browser — otherwise it would zoom twice.
@@ -111,14 +116,21 @@ registerCommands(commands, {
   editor,
   preferences,
   windowService: platform.window,
+  notify: (message, kind) => statusBar.flash(message, kind),
 });
 
 // Desktop: the native menu bar owns most shortcuts; the page skips those.
-const handledByMenu = (await platform.installMenu?.({ commands, keymap: KEYMAP })) ?? new Set();
-const shortcuts = new KeyboardShortcuts(commands, KEYMAP, { skip: handledByMenu }).attach(window);
+// Its check-mark items (Show Ruler…) read their state from the preferences.
+const menu = await platform.installMenu?.({ commands, keymap: KEYMAP, isChecked: (key) => preferences.get(key) });
+const shortcuts = new KeyboardShortcuts(commands, KEYMAP, { skip: menu?.handled ?? new Set() }).attach(window);
 const toolbar = new Toolbar(windowEl, commands, (id) => shortcuts.labelFor(id));
 
-attachSmartKeys(editor);
+// Shortcut labels shown inside menus (e.g. "⌥⌘T" next to "Format Table").
+document.querySelectorAll('[data-shortcut-for]').forEach((el) => {
+  el.textContent = shortcuts.labelFor(el.dataset.shortcutFor) ?? '';
+});
+
+attachSmartKeys(editor, { autoFormatTables: () => preferences.get('autoFormatTables') });
 const dropOverlay = $('#drop-overlay');
 platform.watchDrops(windowEl, {
   onHover: (isHovering) => { dropOverlay.hidden = !isHovering; },
@@ -152,9 +164,13 @@ document_.on('content', (text) => {
 
 document_.on('state', (state) => titleBar.update(state));
 
+// Table commands only make sense with the caret inside a table.
+const tableOnlyItems = [...document.querySelectorAll('[data-requires="table"]')];
 editor.onCaretMove((state) => {
   statusBar.setCaret(cursorPosition(state.text, state.start));
   toolbar.setValue('format.paragraphStyle', detectLinePrefix(state));
+  const inTable = isInTable(state);
+  tableOnlyItems.forEach((item) => { item.disabled = !inTable; });
 });
 
 /* ───────────── 5. Events: preferences → views ───────────── */
@@ -165,8 +181,12 @@ const applyPreference = {
   fontSize: (px) => { workspace.setFontSize(px); toolbar.setValue('view.setFontSize', px); },
   showRuler: (show) => { rulers.forEach((r) => r.setVisible(show)); toolbar.setValue('view.toggleRuler', show); },
   textWidth: (px) => { workspace.setTextWidth(px); rulers.forEach((r) => r.refresh()); },
+  autoFormatTables: (on) => toolbar.setValue('table.toggleAutoFormat', on),
 };
-preferences.on('change', ({ key, value }) => applyPreference[key]?.(value));
+preferences.on('change', ({ key, value }) => {
+  applyPreference[key]?.(value);
+  menu?.refreshChecks(); // keep the desktop menu's check marks in sync
+});
 Object.entries(applyPreference).forEach(([key, apply]) => apply(preferences.get(key)));
 
 /* ───────────── 6. Start ───────────── */

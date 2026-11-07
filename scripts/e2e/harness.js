@@ -84,8 +84,21 @@ export async function openApp({ appPort, debugPort, initScript }) {
   await send('Page.navigate', { url: `http://127.0.0.1:${appPort}/` });
   await sleep(1500);
 
-  const js = async (expression) =>
-    (await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true })).result?.result?.value;
+  /**
+   * Evaluates JS in the page and returns its (awaited) value.
+   * Gives up after 10 s, so an expression that never settles (e.g. awaiting a
+   * command that's waiting for a dialog answer) fails a check instead of
+   * hanging the whole run.
+   */
+  const js = async (expression) => {
+    const evaluation = send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true })
+      .then((msg) => msg.result?.result?.value);
+    const timeout = sleep(10_000).then(() => {
+      consoleProblems.push(`Timed out waiting for: ${expression.slice(0, 80)}`);
+      return undefined;
+    });
+    return Promise.race([evaluation, timeout]);
+  };
   const press = async (key, code, modifiers = 0, text) => {
     await send('Input.dispatchKeyEvent', { type: 'keyDown', key, code, modifiers, text });
     await send('Input.dispatchKeyEvent', { type: 'keyUp', key, code, modifiers });

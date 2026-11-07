@@ -54,6 +54,6 @@ export function createDesktopPlatform(tauri = window.__TAURI__) {
       collect();
     },
 
-    installMenu: ({ commands, keymap }) => installDesktopMenu(api, commands, keymap),
+    installMenu: ({ commands, keymap, isChecked }) => installDesktopMenu(api, commands, keymap, isChecked),
   };
 }

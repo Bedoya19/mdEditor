@@ -18,6 +18,8 @@ const SEP = { separator: true };
  * Menu layout. An entry is one of:
  *  - "command.id"                                 → label + shortcut looked up automatically
  *  - { command, arg?, label?, accelerator?, id? } → explicit item
+ *  - { command, check: 'prefKey' }                → item with a check mark showing that preference
+ *  - { title, items: [...] }                      → submenu
  *  - { predefined: 'Copy' | … }                   → a standard macOS item (Tauri/AppKit implements it)
  *  - SEP
  *
@@ -74,7 +76,23 @@ export const MENU_LAYOUT = [
       SEP,
       'format.bulletList', 'format.orderedList', 'format.taskList',
       SEP,
-      'format.codeBlock', 'insert.table', 'insert.rule',
+      'format.codeBlock', 'insert.rule',
+      SEP,
+      {
+        title: 'Table',
+        items: [
+          'table.insert',
+          SEP,
+          'table.rowAbove', 'table.rowBelow', 'table.colLeft', 'table.colRight',
+          SEP,
+          'table.deleteRow', 'table.deleteColumn',
+          SEP,
+          'table.alignLeft', 'table.alignCenter', 'table.alignRight',
+          SEP,
+          'table.format',
+          { command: 'table.toggleAutoFormat', check: 'autoFormatTables' },
+        ],
+      },
     ],
   },
   {
@@ -85,7 +103,7 @@ export const MENU_LAYOUT = [
       { id: 'view.preview', command: 'view.setMode', arg: 'preview', label: 'Preview Only' },
       'view.cycle',
       SEP,
-      'view.toggleRuler',
+      { command: 'view.toggleRuler', check: 'showRuler' },
       SEP,
       { predefined: 'Fullscreen' },
     ],
@@ -117,16 +135,18 @@ export function toAccelerator(combo) {
 /**
  * Resolves the layout into concrete items.
  * @param {typeof MENU_LAYOUT} layout
- * @param {{labelOf: (id: string) => string, keymap: Record<string, string>}} sources
+ * @param {{labelOf: (id: string) => string, keymap: Record<string, string>,
+ *          isChecked?: (prefKey: string) => boolean}} sources
  * @returns {{spec: {title: string, items: object[]}[], handled: Set<string>}}
  *   `handled` = command ids whose shortcut the menu now owns.
  */
-export function buildMenuSpec(layout, { labelOf, keymap }) {
+export function buildMenuSpec(layout, { labelOf, keymap, isChecked = () => false }) {
   const comboOf = new Map(Object.entries(keymap).map(([combo, id]) => [id, combo]));
   const handled = new Set();
 
   const resolve = (entry) => {
     if (entry === SEP || entry.separator || entry.predefined) return entry;
+    if (entry.items) return { title: entry.title, items: entry.items.map(resolve) }; // submenu
     const item = typeof entry === 'string' ? { command: entry } : { ...entry };
     item.id ??= item.command;
     item.label ??= labelOf(item.command);
@@ -134,6 +154,7 @@ export function buildMenuSpec(layout, { labelOf, keymap }) {
       item.accelerator = toAccelerator(comboOf.get(item.command));
     }
     if (item.accelerator && comboOf.has(item.command)) handled.add(item.command);
+    if (item.check) item.checked = Boolean(isChecked(item.check));
     return item;
   };
 
@@ -146,14 +167,21 @@ export function buildMenuSpec(layout, { labelOf, keymap }) {
  * @param {import('./tauriApi.js').TauriApi} api
  * @param {import('../../core/CommandRegistry.js').CommandRegistry} commands
  * @param {Record<string, string>} keymap
- * @returns {Promise<Set<string>>} command ids whose shortcuts the menu handles
+ * @param {(prefKey: string) => boolean} [isChecked]  State of check-mark items.
+ * @returns {Promise<{handled: Set<string>, refreshChecks: () => void}>}
+ *   handled: command ids whose shortcuts the menu owns.
+ *   refreshChecks: call after a preference changes so check marks follow it.
  */
-export async function installDesktopMenu(api, commands, keymap) {
+export async function installDesktopMenu(api, commands, keymap, isChecked = () => false) {
   const labels = new Map(commands.list().map(({ id, label }) => [id, label]));
   const { spec, handled } = buildMenuSpec(MENU_LAYOUT, {
     labelOf: (id) => labels.get(id) ?? id,
     keymap,
+    isChecked,
   });
-  await api.setAppMenu(spec, (item) => commands.execute(item.command, item.arg).catch(() => {}));
-  return handled;
+  const { checkItems } = await api.setAppMenu(spec, (item) => commands.execute(item.command, item.arg).catch(() => {}));
+  return {
+    handled,
+    refreshChecks: () => checkItems.forEach(({ prefKey, setChecked }) => setChecked(Boolean(isChecked(prefKey)))),
+  };
 }

@@ -20,6 +20,7 @@ export const DEFAULT_PREFERENCES = Object.freeze({
   editorFont: 'mono',         // key into FONT_STACKS (see ui/EditorView.js)
   fontSize: 14,               // px
   showRuler: true,
+  autoFormatTables: true,     // re-align table pipes on Tab/Enter and table commands
   textWidth: 720,             // px of text column at 100 % zoom (7.5″), set by the ruler
 });
 

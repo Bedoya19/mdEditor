@@ -26,8 +26,10 @@
  *   Desktop only: files the OS asks us to open (Finder "Open With…").
  *
  * @property {(options: {commands: import('../core/CommandRegistry.js').CommandRegistry,
- *             keymap: Record<string, string>}) => Promise<Set<string>>} [installMenu]
- *   Desktop only: build the native menu bar. Resolves with the command ids the
- *   menu now handles (with their shortcuts), so the page doesn't handle them twice.
+ *             keymap: Record<string, string>, isChecked: (prefKey: string) => boolean})
+ *             => Promise<{handled: Set<string>, refreshChecks: () => void}>} [installMenu]
+ *   Desktop only: build the native menu bar. `handled` = the command ids the
+ *   menu now handles (with their shortcuts), so the page doesn't handle them
+ *   twice. `refreshChecks()` updates check-mark items after a preference changes.
  */
 export {};

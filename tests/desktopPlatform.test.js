@@ -104,6 +104,11 @@ test('window: close requests are cancelled and handed to the app', () => {
 
 /* ── DesktopMenu ── */
 
+/** Every item in a menu spec, including the ones inside submenus. */
+const allItems = (spec) => spec.flatMap(function walk(node) {
+  return node.items ? node.items.flatMap(walk) : [node];
+});
+
 test('toAccelerator converts keymap combos', () => {
   assert.equal(toAccelerator('mod+shift+s'), 'CmdOrCtrl+Shift+S');
   assert.equal(toAccelerator('alt+mod+1'), 'Alt+CmdOrCtrl+1');
@@ -112,7 +117,7 @@ test('toAccelerator converts keymap combos', () => {
 
 test('menu: labels and shortcuts come from the registry and the keymap', () => {
   const { spec } = buildMenuSpec(MENU_LAYOUT, { labelOf: (id) => `L:${id}`, keymap: KEYMAP });
-  const save = spec.find((m) => m.title === 'File').items.find((i) => i.command === 'file.save');
+  const save = allItems(spec).find((i) => i.command === 'file.save');
   assert.deepEqual(save, { command: 'file.save', id: 'file.save', label: 'L:file.save', accelerator: 'CmdOrCtrl+S' });
 });
 
@@ -128,6 +133,22 @@ test('menu: the Edit menu keeps the system items ⌘C/⌘V/⌘Z depend on', () =
 
 test('menu: item ids are unique (Tauri routes clicks by id)', () => {
   const { spec } = buildMenuSpec(MENU_LAYOUT, { labelOf: (id) => id, keymap: KEYMAP });
-  const ids = spec.flatMap((m) => m.items).filter((i) => i.id).map((i) => i.id);
+  const ids = allItems(spec).filter((i) => i.id).map((i) => i.id);
   assert.equal(new Set(ids).size, ids.length);
+});
+
+test('menu: Format ▸ Table is a submenu with every table command', () => {
+  const { spec } = buildMenuSpec(MENU_LAYOUT, { labelOf: (id) => id, keymap: KEYMAP });
+  const table = spec.find((m) => m.title === 'Format').items.find((i) => i.title === 'Table');
+  const commands = table.items.filter((i) => i.command).map((i) => i.command);
+  assert.ok(commands.includes('table.insert') && commands.includes('table.format') && commands.includes('table.deleteColumn'));
+  assert.equal(table.items.find((i) => i.command === 'table.format').accelerator, 'Alt+CmdOrCtrl+T');
+});
+
+test('menu: check-mark items take their state from the preferences', () => {
+  const prefs = { showRuler: false, autoFormatTables: true };
+  const { spec } = buildMenuSpec(MENU_LAYOUT, { labelOf: (id) => id, keymap: KEYMAP, isChecked: (k) => prefs[k] });
+  const items = allItems(spec);
+  assert.equal(items.find((i) => i.command === 'view.toggleRuler').checked, false);
+  assert.equal(items.find((i) => i.command === 'table.toggleAutoFormat').checked, true);
 });

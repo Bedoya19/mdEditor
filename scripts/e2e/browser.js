@@ -63,6 +63,43 @@ export async function runBrowserChecks() {
   check('rulers can be hidden', await js('[...document.querySelectorAll(".ruler")].every((r) => r.hidden)'), true);
   await js('mdEditor.commands.execute("view.toggleRuler")');
 
+  // Tables: open the popover from the toolbar, pick 2 columns × 3 rows.
+  js('mdEditor.commands.execute("file.new")'); // not awaited: it waits for the sheet's answer
+  await sleep(300);
+  await js('[...document.querySelectorAll("#sheet button")].find((b) => b.value === "discard").click()');
+  await sleep(300);
+  await js('document.querySelector("#editor").focus()');
+  check('table operations are disabled outside a table',
+    await js('document.querySelector("[data-command=\\"table.rowBelow\\"]").disabled'), true);
+  await js('document.querySelector("[popovertarget=table-menu]").click()');
+  await sleep(100);
+  check('the table button opens the popover', await js('document.querySelector("#table-menu").matches(":popover-open")'), true);
+  await js('document.querySelector(".table-picker__cell[data-arg=\\"2x3\\"]").click()');
+  await sleep(100);
+  check('picking a size inserts the table and closes the popover', [
+    await value(),
+    await js('document.querySelector("#table-menu").matches(":popover-open")'),
+  ], ['| Column 1 | Column 2 |\n| -------- | -------- |\n|          |          |\n|          |          |\n\n', false]);
+  check('…with "Column 1" selected, ready to type over',
+    await js('{ const t = document.querySelector("#editor"); t.value.slice(t.selectionStart, t.selectionEnd); }'), 'Column 1');
+
+  await type('Fruit');
+  await press('Tab', 'Tab', 0);
+  await type('Qty'); // replaces the selected "Column 2" placeholder
+  await press('Tab', 'Tab', 0);
+  await type('Banana');
+  await press('Tab', 'Tab', 0);
+  await type('3');
+  // Alignment happens on Tab/Enter/commands, not while typing: re-align now.
+  await press('t', 'KeyT', 1 | 4); // ⌥⌘T = Format Table (1 = Alt, 4 = ⌘)
+  check('Tab moves between cells (selecting them); ⌥⌘T re-aligns the pipes', (await value()).split('\n').slice(0, 3),
+    ['| Fruit  | Qty |', '| ------ | --- |', '| Banana | 3   |']);
+  check('table operations are enabled inside a table',
+    await js('document.querySelector("[data-command=\\"table.rowBelow\\"]").disabled'), false);
+  await js('mdEditor.commands.execute("table.alignRight")');
+  check('Align Right acts on the caret\'s column', (await value()).split('\n').slice(1, 3),
+    ['| ------ | --: |', '| Banana |   3 |']);
+
   // macOS "smart dashes" arrive as an OS replacement, not as typing.
   const replacementBlocked = (data, inputType) => js(`(() => {
     const e = new InputEvent('beforeinput', { inputType: '${inputType}', data: '${data}', cancelable: true, bubbles: true });
