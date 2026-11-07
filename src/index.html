@@ -124,8 +124,12 @@
     <!-- Writing desk with the paper sheets -->
     <main id="workspace" class="workspace" data-view="split">
       <section class="pane pane--source" aria-label="Markdown source">
-        <div class="paper">
-          <textarea id="editor" class="editor" spellcheck="true" autocapitalize="sentences"
+        <div id="notebook" class="paper paper--notebook">
+          <!-- A SOURCE editor: spell-check underlines are fine, but the OS must
+               never rewrite what you type (smart dashes/quotes, autocorrect,
+               auto-capitalisation would silently change your Markdown). -->
+          <textarea id="editor" class="editor" spellcheck="true" autocorrect="off"
+                    autocapitalize="off" autocomplete="off"
                     aria-label="Markdown source" placeholder="Start writing…"></textarea>
         </div>
       </section>

@@ -64,15 +64,45 @@
 
 /* ── The source editor: notebook paper ─────────────────────── */
 /*
- * Ruled lines and the red margin are background gradients on the textarea.
- * `background-attachment: local` makes them scroll WITH the text, and the
- * line spacing equals the text's line-height (--editor-line), so every line
- * of text sits on a rule.
+ * The ruled lines and the red margin are drawn on the PAPER behind the
+ * (transparent) textarea, not on the textarea itself.
+ *
+ * Why not `background-attachment: local` on the textarea? It makes a
+ * background scroll with the text in Chrome, but Safari's engine (which the
+ * desktop app uses) doesn't apply it reliably to textareas, so the lines
+ * drifted away from the text. Instead, EditorView copies the textarea's
+ * scroll position into `--scroll-y`, and the rules layer is shifted by it.
+ *
+ * The rules are ONE line per tile (`100% × --editor-line`, repeated
+ * vertically), so any shift lines up exactly, and the tile height equals the
+ * text's line-height, so every line of text sits on a rule.
  */
-.editor {
+.paper--notebook {
   --pad-top: 40px;
   --pad-left: 64px;
+  --scroll-y: 0px;
 
+  background:
+    /* red margin line */
+    linear-gradient(to right,
+      transparent calc(var(--pad-left) - 16px),
+      var(--paper-margin) calc(var(--pad-left) - 16px) calc(var(--pad-left) - 15px),
+      transparent calc(var(--pad-left) - 15px)),
+    /* one rule at the bottom of each line box */
+    linear-gradient(transparent calc(var(--editor-line) - 1px), var(--paper-rule) 0)
+      0 calc(var(--pad-top) - var(--scroll-y)) / 100% var(--editor-line) repeat-y,
+    var(--texture-paper),
+    var(--paper);
+}
+
+@media (max-width: 760px) {
+  .paper--notebook {
+    --pad-top: 24px;
+    --pad-left: 36px;
+  }
+}
+
+.editor {
   flex: 1;
   width: 100%;
   min-height: 0;
@@ -87,16 +117,7 @@
   color: var(--ink);
   caret-color: #1d63d8;
   tab-size: 4;
-  background:
-    linear-gradient(to right,
-      transparent calc(var(--pad-left) - 16px),
-      var(--paper-margin) calc(var(--pad-left) - 16px) calc(var(--pad-left) - 15px),
-      transparent calc(var(--pad-left) - 15px)),
-    repeating-linear-gradient(
-      transparent 0 calc(var(--editor-line) - 1px),
-      var(--paper-rule) calc(var(--editor-line) - 1px) var(--editor-line));
-  background-position: 0 0, 0 var(--pad-top);
-  background-attachment: local;
+  background: transparent; /* the paper behind it draws the lines */
 }
 
 .editor::placeholder {
@@ -106,8 +127,6 @@
 
 @media (max-width: 760px) {
   .editor {
-    --pad-top: 24px;
-    --pad-left: 36px;
     padding-right: 20px;
   }
 }

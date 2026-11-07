@@ -9,7 +9,7 @@
  */
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -99,6 +99,11 @@ export async function openApp({ appPort, debugPort, initScript }) {
     value: () => js('document.querySelector("#editor").value'),
     select: (start, end) => js(`document.querySelector("#editor").setSelectionRange(${start}, ${end})`),
     consoleProblems,
+    /** Saves a PNG of the page (or of `clip` = {x, y, width, height, scale}). Handy when debugging a check. */
+    screenshot: async (file, clip) => {
+      const { result } = await send('Page.captureScreenshot', clip ? { clip } : {});
+      writeFileSync(file, Buffer.from(result.data, 'base64'));
+    },
     close: async () => { ws.close(); await close(); },
   };
 }

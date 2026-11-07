@@ -10,10 +10,37 @@
  * The view exposes the selection as a plain `TextState` and accepts
  * `TextEdit`s computed by the pure functions in editor/textTransforms.js.
  */
+/**
+ * Characters macOS's "smart" substitutions produce (System Settings ›
+ * Keyboard › "Use smart quotes and dashes"). In a SOURCE editor they corrupt
+ * the text: `--` in a table delimiter becomes `—`, and `"` inside code
+ * becomes `“`.
+ */
+const SMART_SUBSTITUTES = /[—–“”‘’…]/; // — – “ ” ‘ ’ …
+
 export class EditorView {
   /** @param {HTMLTextAreaElement} textarea */
   constructor(textarea) {
     this.textarea = textarea;
+    this.#blockSmartSubstitutions();
+  }
+
+  /**
+   * Stops the OS from swapping what you typed for typographic characters.
+   * Two layers:
+   *  1. `autocorrect="off"` on the <textarea> (index.html) asks WebKit not to substitute.
+   *  2. If a substitution still arrives, it comes as an "insertReplacementText"
+   *     input (the OS *replacing* text, not you typing). We cancel those when
+   *     they would introduce a smart character. Typing a real em dash yourself
+   *     (⌥⇧-) is a normal "insertText" input, so it still works.
+   */
+  #blockSmartSubstitutions() {
+    this.textarea.addEventListener('beforeinput', (event) => {
+      const replacement = event.data ?? event.dataTransfer?.getData('text/plain') ?? '';
+      if (event.inputType === 'insertReplacementText' && SMART_SUBSTITUTES.test(replacement)) {
+        event.preventDefault();
+      }
+    });
   }
 
   /** Element that scrolls (used by ScrollSync). */
@@ -65,6 +92,11 @@ export class EditorView {
 
   focus() {
     this.textarea.focus();
+  }
+
+  /** @param {(scrollTop: number) => void} callback  Fired when the text scrolls. */
+  onScroll(callback) {
+    this.textarea.addEventListener('scroll', () => callback(this.textarea.scrollTop), { passive: true });
   }
 
   /** @param {(text: string) => void} callback  Fired on every user edit. */

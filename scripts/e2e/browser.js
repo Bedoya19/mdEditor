@@ -63,6 +63,23 @@ export async function runBrowserChecks() {
   check('ruler can be hidden', await js('document.querySelector("#ruler").hidden'), true);
   await js('mdEditor.commands.execute("view.toggleRuler")');
 
+  // macOS "smart dashes" arrive as an OS replacement, not as typing.
+  const replacementBlocked = (data, inputType) => js(`(() => {
+    const e = new InputEvent('beforeinput', { inputType: '${inputType}', data: '${data}', cancelable: true, bubbles: true });
+    document.querySelector('#editor').dispatchEvent(e);
+    return e.defaultPrevented;
+  })()`);
+  check('OS smart-dash replacement is blocked', await replacementBlocked('—', 'insertReplacementText'), true);
+  check('OS smart-quote replacement is blocked', await replacementBlocked('“', 'insertReplacementText'), true);
+  check('typing a real em dash still works', await replacementBlocked('—', 'insertText'), false);
+  check('ordinary spelling corrections are untouched', await replacementBlocked('the', 'insertReplacementText'), false);
+
+  // Notebook rules follow the text when it scrolls.
+  await js(`{ const t = document.querySelector('#editor'); t.value = 'line\\n'.repeat(300); t.scrollTop = 137; }`);
+  await sleep(100);
+  check('ruled lines move with the scrolled text',
+    await js('document.querySelector("#notebook").style.getPropertyValue("--scroll-y")'), '137px');
+
   check('no errors or warnings in the console', app.consoleProblems, []);
   await app.close();
   return report();

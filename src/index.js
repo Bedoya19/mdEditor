@@ -121,6 +121,11 @@ platform.watchDrops(windowEl, {
 });
 new ScrollSync(editor.scrollElement, preview.scrollElement);
 
+// The notebook rules are drawn on the paper behind the textarea (see
+// workspace.css); keep them moving with the text.
+const notebook = $('#notebook');
+editor.onScroll((top) => notebook.style.setProperty('--scroll-y', `${top}px`));
+
 /* ───────────── 4. Events: document → views ───────────── */
 
 editor.onInput((text) => document_.setContent(text));
